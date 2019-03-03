@@ -12,18 +12,16 @@ def show_labeled_img(image, label, label_names):
     plt.imshow(lbl_viz)
 
 # Helper function to show a batch
-def show_batch(sample_batched, label_names):
+def show_batch(sample_batched, label_names, nrow=2):
     """Show labeled image for a batch of samples."""
     images_batch, labels_batch = sample_batched['image'], sample_batched['label']
     batch_size = len(images_batch)
     im_size = images_batch.size(2)
 
-    n_row = 2
-
-    img_grid = utils.make_grid(images_batch, nrow=n_row)
+    img_grid = utils.make_grid(images_batch, nrow=nrow)
     img_grid = img_grid.numpy().transpose((1, 2, 0))
     
-    lbl_grid = utils.make_grid(labels_batch.unsqueeze(1), nrow=n_row))
+    lbl_grid = utils.make_grid(labels_batch.unsqueeze(1), nrow=nrow)
     lbl_grid = lbl_grid.numpy()[0]
     
     #lbl_names = sorted(list({l for group in sample_batched['label_names'] for l in group}))
