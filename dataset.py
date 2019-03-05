@@ -1,28 +1,26 @@
-
 import os
 import json
+import random
+
+import cv2
 import labelme
 import skimage
+
 import torch
 import numpy as np
 from torch.utils.data import Dataset
+import torchvision.transforms.functional as F
+
 
 class BuildingsDataset(Dataset):
     """Buildings dataset."""
 
-    def __init__(self, img_dir, transform=None):
+    def __init__(self, img_dir, transform=None, transform_seed=None):
         """
         Args:
             img_dir (string): Directory with all the images with labels stored as json.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
-        def json_contain_image(path):
-            data = json.load(open(path))
-            return data['imageData']
-
-        self.transform = transform
-        self.img_paths = [os.path.join(img_dir, fname) for fname in sorted(os.listdir(img_dir))]
-        self.img_paths = [path for path in self.img_paths if json_contain_image(path)]
         self.label_name_to_value = {
             '_background_': 0,
             'door':1,
@@ -30,6 +28,26 @@ class BuildingsDataset(Dataset):
             'wall': 3,
             'window': 4,
         }
+        
+        def json_contain_image(path):
+            data = json.load(open(path))
+            return data['imageData']
+        
+        self.img_paths = [os.path.join(img_dir, fname) for fname in sorted(os.listdir(img_dir))]
+        self.img_paths = [path for path in self.img_paths if json_contain_image(path)]
+
+        def transform_tuple(image, label):
+            if transform:
+                seed = transform_seed
+                if not transform_seed:
+                    seed = np.random.randint(2147483647)
+                random.seed(seed)
+                image = transform(image)
+                random.seed(seed)
+                label = transform(label)
+            return {'image': image, 'label': label}
+
+        self.transform = transform_tuple
 
     def __len__(self):
         return len(self.img_paths)
@@ -40,6 +58,9 @@ class BuildingsDataset(Dataset):
 
         imageData = data['imageData']
         img = labelme.utils.img_b64_to_arr(imageData)
+        #img = cv2.imdecode(img, cv2.IMREAD_COLOR)
+        #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
         #img_labels = {'_background_': 0}
 
         for shape in sorted(data['shapes'], key=lambda x: x['label']):
@@ -61,13 +82,16 @@ class BuildingsDataset(Dataset):
 
         # int to float
         img = (img / 255).astype('float32')
+        #img = F.to_pil_image(img)
         # int32 to uint8
-        lbl = lbl.astype('uint8')
+        lbl = lbl.astype('long')[:, :, np.newaxis]
                 
         sample = {'image': img, 'label': lbl}#, 'label_names': img_labels}
-
         if self.transform:
-            sample = self.transform(sample)
+            sample = self.transform(**sample)
+            if isinstance(sample['label'], torch.FloatTensor):
+                sample['label'] = (sample['label'] * 255).int()
+
 
         return sample
 
