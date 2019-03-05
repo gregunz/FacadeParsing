@@ -298,14 +298,14 @@
           Conv2d-295         [-1, 16, 128, 128]           2,320
             ReLU-296         [-1, 16, 128, 128]               0
         ConvRelu-297         [-1, 16, 128, 128]               0
-          Conv2d-298          [-1, 4, 128, 128]              68
+          Conv2d-298          [-1, 5, 128, 128]              85
 ================================================================
-Total params: 47,466,948
-Trainable params: 47,466,948
+Total params: 47,466,965
+Trainable params: 47,466,965
 Non-trainable params: 0
 ----------------------------------------------------------------
 Input size (MB): 0.19
-Forward/backward pass size (MB): 136.81
+Forward/backward pass size (MB): 136.94
 Params size (MB): 181.07
-Estimated Total Size (MB): 318.07
+Estimated Total Size (MB): 318.20
 ----------------------------------------------------------------

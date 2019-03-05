@@ -84,13 +84,13 @@ class BuildingsDataset(Dataset):
         img = (img / 255).astype('float32')
         #img = F.to_pil_image(img)
         # int32 to uint8
-        lbl = lbl.astype('long')[:, :, np.newaxis]
+        lbl = lbl.astype('uint8')[:, :, np.newaxis]
                 
         sample = {'image': img, 'label': lbl}#, 'label_names': img_labels}
         if self.transform:
             sample = self.transform(**sample)
             if isinstance(sample['label'], torch.FloatTensor):
-                sample['label'] = (sample['label'] * 255).int()
+                sample['label'] = (sample['label'] * 255).long()
 
 
         return sample
