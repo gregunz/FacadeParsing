@@ -8,8 +8,18 @@ def convert_to_numpy(tensor):
         tensor = tensor.numpy().transpose((1, 2, 0))
     return tensor
 
-def show_labeled_img(image, label, label_names):
-    """Show labeled image"""
+def show_img(image):
+    if isinstance(image, torch.Tensor):
+        image = image.clone().permute(1,2,0)
+    plt.imshow(image.squeeze())
+    plt.show()
+
+def show_labeled_img(image, label, label_names='0123456789'):
+    """Show labeled image"""  
+    if isinstance(label_names, dict):
+        label_names = {v:k for k, v in label_names.items()}
+        label_names = [label_names[i] for i in label_names]
+
     image = convert_to_numpy(image)
     label = convert_to_numpy(label)
     img = (image * 255).astype('uint8')
