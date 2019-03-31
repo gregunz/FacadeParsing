@@ -5,7 +5,7 @@ import torch
 
 from tqdm import tqdm_notebook as tqdm
 
-def train_model(dataloaders, dataset_sizes, patch_size, model, device, criterion, optimizer, scheduler, writer, num_epochs=25):
+def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, device, criterion, optimizer, scheduler, writer, num_epochs=25):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -69,7 +69,7 @@ def train_model(dataloaders, dataset_sizes, patch_size, model, device, criterion
                 if phase == 'val' and epoch_loss < best_loss:
                     best_acc = epoch_acc
                     best_loss = epoch_loss
-                    torch.save(model.state_dict(), 'data/model_{}_{}.torch'.format(patch_size, epoch))
+                    torch.save(model.state_dict(), '{}/models/model_{}_{}.torch'.format(path_to_data, model_name, epoch))
                     best_model_wts = copy.deepcopy(model.state_dict())
 
             print()
