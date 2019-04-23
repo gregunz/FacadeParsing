@@ -2,18 +2,20 @@ import os
 import pickle
 
 # CONSTANTS
+num_images = 418
+num_rotations = 5
 path_to_data = '/data'
 patch_size = 256
 max_size = 1024
 cropped = True
+crop_step = 10
 crop_margin = 100
 
 label_name_to_value = {
     '_background_': 0,
-    'door':1,
-    'object':2,
-    'wall': 3,
-    'window': 4,
+    'wall': 1,
+    'window': 2,
+    'door':3,
 }
 
 # DERIVATIVES

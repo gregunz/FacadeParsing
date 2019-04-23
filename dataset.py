@@ -16,12 +16,36 @@ import torchvision.transforms.functional as F
 
 from torch.utils.data import Dataset
 
-from constants import label_name_to_value, mean, std
+from constants import label_name_to_value, mean, std, num_images, num_rotations
+
+class FacadesDatasetRandomRot(Dataset):
+    def __init__(self, img_dir, transform=None):
+        Dataset.__init__(self)
+        self.dir_path = img_dir
+        self.num_images = num_images # hardcoded from constants
+        self.num_rotations = num_rotations # hardcoded from constants
+        self.transform = transform
+
+    def __len__(self):
+        return num_images
+    
+    def get_filename(self, img_idx, rot_idx, is_img):
+        name = 'img' if is_img else 'lbl'
+        return '{}/{}_{:03d}_{:03d}.torch'.format(self.dir_path, name, img_idx, rot_idx)
+
+    def __getitem__(self, idx):
+        if idx >= FacadesDatasetRandomRot.__len__(self): raise IndexError
+        rot_idx = random.randint(0, self.num_rotations - 1)
+        img, lbl = torch.load(self.get_filename(idx, rot_idx, True)),\
+               torch.load(self.get_filename(idx, rot_idx, False))
+        if self.transform is not None:
+            img, lbl = self.transform(img, lbl)
+        return img, lbl
 
 class FacadesDatasetH5Patches(Dataset):
     def __init__(self, img_path, normalized=False):
         Dataset.__init__(self)
-        h5_file = h5py.File(img_path)
+        h5_file = h5py.File(img_path, 'r')
         self.normalized = normalized
         self.labels = label_name_to_value
         self.data = h5_file.get('image')
@@ -59,6 +83,7 @@ class FacadesDatasetH5Full(FacadesDatasetH5Patches):
         
         lbl = torch.stack([d['label'] for d in data])
         lbl = make_grid(lbl, nrow=self.n_rows[index], padding=0)
+        lbl = lbl[0:1] #because make_grid return 3 (identical) channels for the image
         
         return {'image': img, 'label': lbl}
     
@@ -105,6 +130,7 @@ class FacadesDatasetJson(Dataset):
         imageData = data['imageData']
         img = labelme.utils.img_b64_to_arr(imageData)
 
+        """
         for shape in sorted(data['shapes'], key=lambda x: x['label']):
             label_name = shape['label']
             if label_name == 'objet':
@@ -112,6 +138,9 @@ class FacadesDatasetJson(Dataset):
                 label_name = shape['label']
                 
             label_value = self.label_name_to_value[label_name]
+        """
+        # removing object (and misnamed objet) class
+        data['shapes'] = [shape for shape in data['shapes'] if shape['label'] != 'object' and shape['label'] != 'objet']
 
         try:
             lbl = labelme.utils.shapes_to_label(img.shape, data['shapes'], self.label_name_to_value)

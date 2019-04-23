@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import labelme
 import torch
 from torchvision import utils
+from constants import label_name_to_value
 
 def convert_to_numpy(tensor):
     if isinstance(tensor, torch.Tensor):
@@ -11,10 +12,11 @@ def convert_to_numpy(tensor):
 def show_img(image):
     if isinstance(image, torch.Tensor):
         image = image.clone().permute(1,2,0)
+    print(image.shape)
     plt.imshow(image.squeeze())
     plt.show()
 
-def show_labeled_img(image, label, label_names='0123456789'):
+def show_labeled_img(image, label, label_names=label_name_to_value):
     """Show labeled image"""  
     if isinstance(label_names, dict):
         label_names = {v:k for k, v in label_names.items()}
