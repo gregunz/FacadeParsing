@@ -2,23 +2,30 @@ import time
 import sys
 import copy
 import torch
+import os
+
+from constants import label_name_to_value
 
 from loss_and_metric import jaccard_index
+from tqdm_ml import Epocher
 
-from tqdm import tqdm_notebook as tqdm
-
-def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, device, criterion, optimizer, scheduler, writer, num_epochs=25):
+def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, device, criterion, optimizer, scheduler, writer=None, num_epoch=25, keep_n_best=3, verbose=True):
     since = time.time()
+    
+    epoch_offset = 1 # because we start at 1 and not 0
+    if hasattr(model, 'epoch_trained'):
+        epoch_offset += model.epoch_trained 
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_jacc_mean = 0.0
     best_loss = sys.maxsize
+    
+    best_model_paths = []
+    
+    epocher = Epocher(num_epoch, epoch_offset=epoch_offset)
 
     try:
-        for epoch in range(num_epochs):
-            print('Epoch {}/{}'.format(epoch, num_epochs - 1))
-            print('-' * 10)
-
+        for epoch in epocher:
             # Each epoch has a training and validation phase
             for phase in ['train', 'val']:
                 if phase == 'train':
@@ -28,14 +35,13 @@ def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, dev
                     model.eval()   # Set model to evaluate mode
 
                 running_loss = 0.0
-                running_jacc = torch.tensor([0.0 for i in range(model.num_classes)])
+                running_jacc = torch.tensor([0.0] * model.num_classes)
 
                 # Iterate over data.
-                for i, sample in enumerate(tqdm(dataloaders[phase])):
-                    inputs = sample['image'].to(device)
-                    labels = sample['label'].squeeze().to(device)
-                    #print(inputs.shape, labels.shape)
-                    #print(set(labels.numpy().flatten()))
+                for data_idx, (inputs, labels) in enumerate(dataloaders[phase]):
+                    epocher.print('{}: {}/{} batch'.format(phase, data_idx, len(dataloaders[phase])))
+                    inputs = inputs.to(device)
+                    labels = labels.to(device).squeeze(1)
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -56,37 +62,51 @@ def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, dev
                     # statistics
                     loss_scalar =  loss.item() * inputs.size(0)
                     running_loss += loss_scalar
-                    running_jacc += jaccard_index(preds, labels, model.num_classes)
+                    jacc_scalars = jaccard_index(preds, labels, model.num_classes)
+                    running_jacc += jacc_scalars
 
                     # tensorboard
-                    x_axis = i + epoch * dataset_sizes[phase]
-                    writer.add_scalar('{}_loss'.format(phase), loss_scalar,  x_axis)
+                    if writer:
+                        x_axis = data_idx + epoch * dataset_sizes[phase]
+                        writer.add_scalar('{}_loss'.format(phase), loss_scalar,  x_axis)
+                        for name,value in label_name_to_value.items():
+                            writer.add_scalar('{}_jacc_{}'.format(phase, name), jacc_scalars[value],  x_axis)
                     
                 epoch_loss = running_loss / dataset_sizes[phase]
                 epoch_jacc = running_jacc / dataset_sizes[phase]
                 epoch_jacc_mean = epoch_jacc.mean().item()
                 
-                jacc_dict = {j:t.item() for j,t in enumerate(epoch_jacc)}
-                print('{} Loss: {:.4f} MeanJacc: {:.4f}  JaccPerClass: {}'.format(phase, epoch_loss, epoch_jacc_mean, jacc_dict))
+                if verbose:
+                    jacc_list = ['{}: {:.4f}'.format(n, epoch_jacc[v].item()) for n,v in label_name_to_value.items()]
+                    stats_string = '<{}> Loss: {:.4f} - MeanJacc: {:.4f} - JaccPerClass: ({})'.format(phase, epoch_loss, epoch_jacc_mean, ' '.join(jacc_list))
+                    epocher.update_stats(stats_string)
 
                 # deep copy the model
-                if phase == 'val' and (epoch_loss < best_loss or best_jacc_mean > epoch_jacc_mean):
+                if phase == 'val' and (epoch_loss < best_loss or epoch_jacc_mean > best_jacc_mean):
                     best_jacc_mean = max(epoch_jacc_mean, best_jacc_mean)
                     best_loss = min(epoch_loss, best_loss)
                     model_path = '{}/models/model_{}_{}.torch'.format(path_to_data, model_name, epoch)
+                    if len(best_model_paths) >= keep_n_best:
+                        os.remove(best_model_paths.pop(0))
+                    best_model_paths.append(model_path)
+                    
                     torch.save(model.state_dict(), model_path)
-                    print('Saving model in {}'.format(model_path))
+                    if verbose:
+                        ls_string = model_path
+                        epocher.update_ls(ls_string)
                     best_model_wts = copy.deepcopy(model.state_dict())
-
-            print()
+            
+            if hasattr(model, 'epoch_trained'):
+                model.epoch_trained += 1
 
     except KeyboardInterrupt:
         pass
     
     time_elapsed = time.time() - since
+    print()
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     print('Best val Loss: {:4f}'.format(best_loss))
-    print('Best val Acc: {:4f}'.format(best_jacc_mean))
+    print('Best val Jacc: {:4f}'.format(best_jacc_mean))
 
     # load best model weights
     model.load_state_dict(best_model_wts)

@@ -33,9 +33,8 @@ def show_labeled_img(image, label, label_names=label_name_to_value):
     plt.imshow(lbl_viz)
     
 # Helper function to show a batch
-def show_batch(sample_batched, label_names, nrow=2):
+def show_batch(images_batch, labels_batch, label_names, nrow=2):
     """Show labeled image for a batch of samples."""
-    images_batch, labels_batch = sample_batched['image'], sample_batched['label']
     batch_size = len(images_batch)
     im_size = images_batch.size(2)
 

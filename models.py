@@ -97,6 +97,7 @@ class AlbuNet(nn.Module):
             True: deconvolution is used in decoder
         """
         super().__init__()
+        self.epoch_trained = 0
         self.num_classes = num_classes
 
         self.pool = nn.MaxPool2d(2, 2)

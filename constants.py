@@ -12,7 +12,7 @@ crop_step = 10
 crop_margin = 100
 
 label_name_to_value = {
-    '_background_': 0,
+    'background': 0,
     'wall': 1,
     'window': 2,
     'door':3,

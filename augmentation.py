@@ -105,18 +105,28 @@ def random_flip(img, lbl, p=0.5):
     else:
         return img, lbl
     
-def random_brightness(img, lbl):
+def random_brightness_and_contrast(img, lbl):
     is_tensor = type(img) is Tensor
     assert type(img) is type(lbl)
     
-    from_ = 0.3
-    factor = random.random() * (2 - from_ * 2) + from_
-    tf = T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.Lambda(lambda img: PIL.ImageEnhance.Brightness(img).enhance(factor)),
-        tf_if(T.ToTensor(), is_tensor),
-    ])
-    return tf(img), lbl
+    contr_from = 0.75
+    contr_factor = contr_from + random.random() * (2 - contr_from * 2)
+    bright_from = 0.85
+    bright_factor = bright_from + random.random() * (2 - bright_from * 2)
+    
+    # TODO inconsistencies: changes on tensor are not exactly the same
+    # as the one with PIL (scaling of factors)
+    if is_tensor:
+        #apply contrast
+        img = contr_factor * (img - 0.5) + 0.5
+        #apply brightness
+        img = img + (bright_factor - 1)
+        return torch.clamp(img , min=0, max=1), lbl        
+    else:
+        img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
+        img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
+        return img, lbl
+
 
 def gen_one_patch(full_res_img, full_res_lbl):
     is_tensor = type(full_res_img) is Tensor
@@ -133,7 +143,7 @@ def gen_one_patch(full_res_img, full_res_lbl):
     crop_size = min(images_labels[0][0].size) // 3
     img, lbl = gen_crops(img, lbl, crop_size=crop_size, ncrops=ncrops)[0]
     img, lbl = random_flip(img, lbl)
-    img, lbl = random_brightness(img, lbl)
+    img, lbl = random_brightness_and_contrast(img, lbl)
     return img, lbl
 
 def gen_one_rotation(full_res_img, full_res_lbl, as_tensor=True):
@@ -177,7 +187,7 @@ def gen_one_patch(full_res_img, full_res_lbl, as_tensor=True):
     crop_size = min(img.size) // 3
     img, lbl = gen_crops(img, lbl, crop_size=crop_size, ncrops=1)[0]
     img, lbl = random_flip(img, lbl)
-    img, lbl = random_brightness(img, lbl)
+    img, lbl = random_brightness_and_contrast(img, lbl)
     
     if as_tensor:
         img, lbl = T.ToTensor()(img), (T.ToTensor()(lbl)* 255).int()
@@ -193,7 +203,7 @@ def to_stack_tensors(images_labels):
 def aug_rotated(rotated_img, rotated_lbl, ncrops, crop_size=patch_size, as_tensor=True):
     images_labels = gen_crops(rotated_img, rotated_lbl, crop_size=crop_size, ncrops=ncrops)
     images_labels = [random_flip(img, lbl) for (img, lbl) in images_labels]
-    images_labels = [random_brightness(img, lbl) for (img, lbl) in images_labels]
+    images_labels = [random_brightness_and_contrast(img, lbl) for (img, lbl) in images_labels]
     
     if as_tensor:
         return to_stack_tensors(images_labels)
@@ -204,7 +214,6 @@ def aug_pipeline(full_res_img, full_res_lbl, ncrops_multiplier=1, as_tensor=True
     """
     From full res images to patches.
     This is done randomly set the seed to get predictable results
-    Return 'stacked' torch.Tensor of shape (patches, channels, width, height)
     """
     is_tensor = type(full_res_img) is Tensor
     assert type(full_res_img) is type(full_res_lbl)
