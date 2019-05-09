@@ -31,6 +31,7 @@ def show_labeled_img(image, label, label_names=label_name_to_value):
         lbl = lbl[:, :, 0]
     lbl_viz = labelme.utils.draw_label(lbl, img, label_names)
     plt.imshow(lbl_viz)
+    plt.show()
     
 # Helper function to show a batch
 def show_batch(images_batch, labels_batch, label_names, nrow=2):
