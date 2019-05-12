@@ -1,25 +1,31 @@
-import matplotlib.pyplot as plt
 import labelme
 import torch
+
+import matplotlib.pyplot as plt
+
 from torchvision import utils
-from constants import label_name_to_value
+
+from facade_project import LABEL_NAME_TO_VALUE
+
 
 def convert_to_numpy(tensor):
     if isinstance(tensor, torch.Tensor):
         tensor = tensor.numpy().transpose((1, 2, 0))
     return tensor
 
+
 def show_img(image):
     if isinstance(image, torch.Tensor):
-        image = image.clone().permute(1,2,0)
+        image = image.clone().permute(1, 2, 0)
     print(image.shape)
     plt.imshow(image.squeeze())
     plt.show()
 
-def show_labeled_img(image, label, label_names=label_name_to_value):
-    """Show labeled image"""  
+
+def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE):
+    """Show labeled image"""
     if isinstance(label_names, dict):
-        label_names = {v:k for k, v in label_names.items()}
+        label_names = {v: k for k, v in label_names.items()}
         label_names = [label_names[i] for i in label_names]
 
     image = convert_to_numpy(image)
@@ -32,7 +38,8 @@ def show_labeled_img(image, label, label_names=label_name_to_value):
     lbl_viz = labelme.utils.draw_label(lbl, img, label_names)
     plt.imshow(lbl_viz)
     plt.show()
-    
+
+
 # Helper function to show a batch
 def show_batch(images_batch, labels_batch, label_names, nrow=2):
     """Show labeled image for a batch of samples."""
@@ -41,11 +48,11 @@ def show_batch(images_batch, labels_batch, label_names, nrow=2):
 
     img_grid = utils.make_grid(images_batch, nrow=nrow)
     img_grid = img_grid.numpy().transpose((1, 2, 0))
-    
+
     lbl_grid = utils.make_grid(labels_batch, nrow=nrow)
     lbl_grid = lbl_grid.numpy()[0]
-    
-    #lbl_names = sorted(list({l for group in sample_batched['label_names'] for l in group}))
-    
+
+    # lbl_names = sorted(list({l for group in sample_batched['label_names'] for l in group}))
+
     show_labeled_img(img_grid, lbl_grid, label_names)
     plt.title('Batch from dataloader')

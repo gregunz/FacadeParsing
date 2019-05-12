@@ -1,21 +1,14 @@
 import os
 import json
-import random
 
 import labelme
 
-import torch
 import numpy as np
 
 from torch.utils.data import Dataset
-from torchvision.utils import make_grid
-from torchvision.transforms import Normalize
 
-import torchvision.transforms.functional as F
+from facade_project import LABEL_NAME_TO_VALUE
 
-from torch.utils.data import Dataset
-
-from constants import label_name_to_value
 
 class FacadesDatasetJson(Dataset):
     """Buildings dataset."""
@@ -28,11 +21,12 @@ class FacadesDatasetJson(Dataset):
         """
         Dataset.__init__(self)
 
-        self.label_name_to_value = label_name_to_value
-        
-        self.img_paths = [os.path.join(img_dir, fname) for fname in sorted(os.listdir(img_dir))]
+        self.label_name_to_value = LABEL_NAME_TO_VALUE
+
+        self.img_paths = [os.path.join(img_dir, filename) for filename in sorted(os.listdir(img_dir))]
         self.img_paths = [path for path in self.img_paths]
-        
+        self.transform = transform
+
     def __len__(self):
         return len(self.img_paths)
 
@@ -65,7 +59,7 @@ class FacadesDatasetJson(Dataset):
         img = (img / 255).astype('float32')
         # int32 to uint8
         lbl = lbl.astype('uint8')[:, :, np.newaxis]
-                
+
         if self.transform:
             img, lbl = self.transform(img, lbl)
 
