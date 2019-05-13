@@ -9,6 +9,7 @@ class FacadeCWHDataset(Dataset):
     """
     Facade Center-Width-Height Dataset
     """
+
     def __init__(self, json_dir):
         Dataset.__init__(self)
         self.label_name_to_value = LABEL_NAME_TO_VALUE

@@ -1,9 +1,9 @@
 # From (2019.04.03) (MIT License) https://github.com/ternaus/TernausNet/blob/master/unet_models.py
 
-from torch import nn
-from torch.nn import functional as F
 import torch
 import torchvision
+from torch import nn
+from torch.nn import functional as F
 
 
 def conv3x3(in_, out):
@@ -21,6 +21,7 @@ class ConvRelu(nn.Module):
         x = self.activation(x)
         return x
 
+
 class Interpolate(nn.Module):
     def __init__(self, size=None, scale_factor=None, mode='nearest', align_corners=False):
         super(Interpolate, self).__init__()
@@ -29,9 +30,9 @@ class Interpolate(nn.Module):
         self.mode = mode
         self.scale_factor = scale_factor
         self.align_corners = align_corners
-        
+
     def forward(self, x):
-        x = self.interp(x, size=self.size, scale_factor=self.scale_factor, 
+        x = self.interp(x, size=self.size, scale_factor=self.scale_factor,
                         mode=self.mode, align_corners=self.align_corners)
         return x
 

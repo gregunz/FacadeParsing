@@ -1,11 +1,10 @@
 import json
+
 import PIL.Image
 import imageio
-
 import numpy as np
-
-from tqdm.auto import tqdm
 from labelme import utils
+from tqdm.auto import tqdm
 
 
 class labelme2coco(object):

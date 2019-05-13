@@ -86,4 +86,4 @@ def points_to_cwh(points):
     width = max([abs(x1 - x2) for x1, x2 in zip(x[:-1], x[1:])])
     height = max([abs(y1 - y2) for y1, y2 in zip(y[:-1], y[1:])])
 
-    return ctr.x, ctr.y, width, height
+    return round(ctr.x), round(ctr.y), round(width), round(height)

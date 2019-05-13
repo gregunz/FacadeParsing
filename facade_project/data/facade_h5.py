@@ -1,8 +1,7 @@
 import h5py
 import torch
-
-from torchvision.utils import make_grid
 from torch.utils.data import Dataset
+from torchvision.utils import make_grid
 
 from facade_project import LABEL_NAME_TO_VALUE
 

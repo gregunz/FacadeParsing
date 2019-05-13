@@ -1,10 +1,8 @@
-import os
 import json
+import os
 
 import labelme
-
 import numpy as np
-
 from torch.utils.data import Dataset
 
 from facade_project import LABEL_NAME_TO_VALUE

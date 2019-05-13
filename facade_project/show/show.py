@@ -1,8 +1,6 @@
 import labelme
-import torch
-
 import matplotlib.pyplot as plt
-
+import torch
 from torchvision import utils
 
 from facade_project import LABEL_NAME_TO_VALUE

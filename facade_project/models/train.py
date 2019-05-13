@@ -1,8 +1,9 @@
-import time
-import sys
 import copy
-import torch
 import os
+import sys
+import time
+
+import torch
 
 from facade_project import LABEL_NAME_TO_VALUE
 from facade_project.utils.metrics import jaccard_index

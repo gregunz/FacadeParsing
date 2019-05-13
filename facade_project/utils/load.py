@@ -1,12 +1,14 @@
-import labelme
 import json
-import numpy as np
-import PIL
 
+import PIL
+import labelme
+import numpy as np
 from torchvision.transforms import ToTensor
 
+from facade_project import LABEL_NAME_TO_VALUE
 
-def load_tuple_from_json(img_path, label_name_to_value):
+
+def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
     data = json.load(open(img_path))
 
     image_data = data['imageData']
@@ -36,5 +38,3 @@ def load_tuple_from_png(img_dir, img_idx, rot_idx=None, as_tensor=False):
         img = ToTensor()(img)
         lbl = (ToTensor()(lbl) * 256).int()
     return img, lbl
-
-

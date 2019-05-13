@@ -8,5 +8,6 @@ setup(name='FacadeParsing',
       author='Gregunz',
       author_email='mail@gregunz.io',
       url='github.com/gregunz',
-      packages=['facade_project'], requires=['tqdm', 'torch', 'pillow', 'numpy', 'labelme', 'matplotlib', 'torchvision']
+      packages=['facade_project'], requires=['tqdm', 'torch', 'pillow', 'numpy', 'labelme', 'matplotlib', 'torchvision',
+                                             'imageio', 'shapely']
       )

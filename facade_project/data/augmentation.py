@@ -1,16 +1,15 @@
 import random
-import math
 
-import torch
 import PIL
+import math
+import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
-
-from torch import Tensor
 from PIL import Image, ImageChops
+from torch import Tensor
 
-from utils.geometry import rotated_rect_with_max_area, find_limits
 from facade_project import CUT_STEP, CUT_MARGIN
+from facade_project.utils.geometry import rotated_rect_with_max_area, find_limits
 
 
 def get_bbox(im):
@@ -110,4 +109,3 @@ def random_brightness_and_contrast(img, lbl):
         img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
         img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
         return img, lbl
-
