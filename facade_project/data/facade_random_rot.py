@@ -8,6 +8,8 @@ from facade_project import NUM_IMAGES, NUM_ROTATIONS
 
 
 class FacadesDatasetRandomRot(Dataset):
+    # Note that this dataset cannot makes use the CachedDataset because it samples images within
+    # the available rotations
     def __init__(self, img_dir, caching=False, init_caching=False):
         Dataset.__init__(self)
         self.dir_path = img_dir
