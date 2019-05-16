@@ -1,13 +1,18 @@
 import json
+import pickle
 
-import PIL
 import labelme
 import numpy as np
+import torch
 from labelme.utils import img_b64_to_arr
-from torchvision.transforms import ToTensor
 
-from facade_project import LABEL_NAME_TO_VALUE
-from facade_project.geometry.heatmap import points_to_cwh
+from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, IMG_MAX_SIZE
+from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
+
+# 000.torch because they are not rotated but only resized
+img_tensors_paths = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
+                     for i in range(NUM_IMAGES)]
+heatmap_infos = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
 
 def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
@@ -16,7 +21,6 @@ def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
     image_data = data['imageData']
     img = labelme.utils.img_b64_to_arr(image_data)
 
-    # removing object (and misnamed objet) class
     data['shapes'] = [shape for shape in data['shapes'] if shape['label'] in label_name_to_value]
 
     lbl = labelme.utils.shapes_to_label(img.shape, data['shapes'], label_name_to_value)
@@ -25,29 +29,12 @@ def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
     return img, lbl
 
 
-def load_tuple_from_png(img_dir, img_idx, rot_idx=None, as_tensor=False):
-    if rot_idx is not None:
-        rot_idx = '_{:03d}'.format(rot_idx)
-    else:
-        rot_idx = ''
-
-    def load(s):
-        return PIL.Image.open('{:s}/{:s}_{:03d}{:s}.png'.format(img_dir, s, img_idx, rot_idx))
-
-    img = load('img')
-    lbl = load('lbl')
-    if as_tensor:
-        img = ToTensor()(img)
-        lbl = (ToTensor()(lbl) * 256).int()
-    return img, lbl
-
-
 def load_heatmaps_info(labelme_json_path):
     json_data = json.load(open(labelme_json_path, mode='r'))
     return extract_heatmaps_info(json_data)
 
 
-def extract_heatmaps_info(json_data):
+def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
     img = img_b64_to_arr(json_data['imageData'])
     info = {
         'img_height': img.shape[0],
@@ -56,7 +43,7 @@ def extract_heatmaps_info(json_data):
     }
     for shape in json_data['shapes']:
         lbl = shape['label']
-        if lbl in LABEL_NAME_TO_VALUE:
+        if lbl in label_name_to_value:
             points = shape['points']
             if len(points) > 3:
                 c_x, c_y, w, h = points_to_cwh(points)
@@ -67,3 +54,16 @@ def extract_heatmaps_info(json_data):
                     'height': h,
                 })
     return info
+
+
+def __load_img_heatmaps(img_torch_path, heatmap_info):
+    img = torch.load(img_torch_path)
+    heatmaps = build_heatmaps(heatmap_info, max_size=max(img.shape[1:]))
+    return img, heatmaps
+
+
+def load_img_heatmaps(index):
+    return __load_img_heatmaps(
+        img_torch_path=img_tensors_paths[index],
+        heatmap_info=heatmap_infos[index],
+    )
