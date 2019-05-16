@@ -6,7 +6,7 @@ import time
 import torch
 
 from facade_project import LABEL_NAME_TO_VALUE
-from facade_project.utils.metrics import jaccard_index
+from facade_project.nn.metrics import jaccard_index
 from facade_project.utils.tqdm_ml import Epocher
 
 

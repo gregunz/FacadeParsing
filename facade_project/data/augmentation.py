@@ -9,7 +9,8 @@ from PIL import Image, ImageChops
 from torch import Tensor
 
 from facade_project import CUT_STEP, CUT_MARGIN
-from facade_project.utils.geometry import rotated_rect_with_max_area, find_limits
+from facade_project.geometry.image import rotated_rect_with_max_area
+from facade_project.geometry.masks import find_limits
 
 
 def get_bbox(im):
@@ -39,7 +40,7 @@ def tuple_to_pil(img, lbl):
     return T.ToPILImage()(img), T.ToPILImage()(lbl)
 
 
-def random_rot(img, angle, is_label):
+def random_rot(img, angle):
     is_tensor = type(img) is Tensor
 
     img_to_new_dim = lambda img: rotated_rect_with_max_area(*img.size, angle * math.pi / 180)[::-1]
@@ -48,7 +49,6 @@ def random_rot(img, angle, is_label):
         T.Lambda(lambda img: TF.rotate(img, angle)),
         T.Lambda(lambda img: T.CenterCrop(img_to_new_dim(img))(img)),
         tf_if(T.ToTensor(), is_tensor),
-        # T.Lambda(lambda img: img if not is_label else (img * 255).int()),
     ])(img)
 
 
