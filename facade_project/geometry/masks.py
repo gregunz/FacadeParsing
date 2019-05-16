@@ -1,3 +1,9 @@
+from PIL import Image, ImageChops
+from torch import Tensor
+
+from facade_project import CUT_STEP, CUT_MARGIN
+
+
 def find_limits(lbl, step, margin):
     has_label = lambda bins: len(bins) > 1 or bins[0].item() != 0
     h, w = lbl.shape[1:]
@@ -20,3 +26,31 @@ def find_limits(lbl, step, margin):
             break
     assert up != -1 and down != -1 and left != -1 and right != -1
     return up, down, left, right
+
+
+def get_bbox(im):
+    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff)
+    bbox = diff.getbbox()
+    return bbox
+
+
+def trim(im, bbox):
+    if bbox:
+        w, h = im.size
+        bbox = max(0, bbox[0] - CUT_MARGIN), \
+               max(0, bbox[1] - CUT_MARGIN), \
+               min(w, bbox[2] + CUT_MARGIN), \
+               min(h, bbox[3] + CUT_MARGIN)
+        return im.crop(bbox)
+    return im
+
+
+def cut_borders(img, lbl):
+    if type(img) is Tensor:
+        up, down, left, right = find_limits(lbl, CUT_STEP, CUT_MARGIN)
+        return img[:, up:down, left:right], lbl[:, up:down, left:right]
+    else:
+        bbox = get_bbox(lbl)
+        return trim(img, bbox), trim(lbl, bbox)

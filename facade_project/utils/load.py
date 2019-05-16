@@ -3,9 +3,11 @@ import json
 import PIL
 import labelme
 import numpy as np
+from labelme.utils import img_b64_to_arr
 from torchvision.transforms import ToTensor
 
 from facade_project import LABEL_NAME_TO_VALUE
+from facade_project.geometry.heatmap import points_to_cwh
 
 
 def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
@@ -38,3 +40,30 @@ def load_tuple_from_png(img_dir, img_idx, rot_idx=None, as_tensor=False):
         img = ToTensor()(img)
         lbl = (ToTensor()(lbl) * 256).int()
     return img, lbl
+
+
+def load_heatmaps_info(labelme_json_path):
+    json_data = json.load(open(labelme_json_path, mode='r'))
+    return extract_heatmaps_info(json_data)
+
+
+def extract_heatmaps_info(json_data):
+    img = img_b64_to_arr(json_data['imageData'])
+    info = {
+        'img_height': img.shape[0],
+        'img_width': img.shape[1],
+        'cwh_list': [],
+    }
+    for shape in json_data['shapes']:
+        lbl = shape['label']
+        if lbl in LABEL_NAME_TO_VALUE:
+            points = shape['points']
+            if len(points) > 3:
+                c_x, c_y, w, h = points_to_cwh(points)
+                info['cwh_list'].append({
+                    'label': lbl,
+                    'center': (c_x, c_y),
+                    'width': w,
+                    'height': h,
+                })
+    return info

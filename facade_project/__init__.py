@@ -4,7 +4,7 @@ NUM_IMAGES = 418
 NUM_ROTATIONS = 5
 # Path to the data where datasets and saved images are stored
 PATH_TO_DATA = '/data'
-# Size of the patches used for ternaus_net
+# Size of the patches used for albunet
 PATCH_SIZE = 256
 # Max size (either height or width) allowed after resizing the images in order to less computationally expensive
 IMG_MAX_SIZE = 1024
@@ -19,6 +19,12 @@ LABEL_NAME_TO_VALUE = {
 IS_USING_CROP = True
 CUT_STEP = 10
 CUT_MARGIN = 100
+
+# For the construction of the heatmaps
+SIGMA_FIXED = True
+SIGMA_SCALE = 4
+SIGMA = 50
+
 
 
 def to_name(name):
