@@ -10,9 +10,9 @@ from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, IMG_MA
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 
 # 000.torch because they are not rotated but only resized
-img_tensors_paths = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
-                     for i in range(NUM_IMAGES)]
-heatmap_infos = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
+IMG_RESIZED_TENSORS_PATH = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
+                            for i in range(NUM_IMAGES)]
+HEATMAP_INFOS = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
 
 def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
@@ -62,8 +62,8 @@ def __load_img_heatmaps(img_torch_path, heatmap_info):
     return img, heatmaps
 
 
-def load_img_heatmaps(index):
+def load_img_heatmaps(index, img_tensors_path=IMG_RESIZED_TENSORS_PATH, heatmap_infos=HEATMAP_INFOS):
     return __load_img_heatmaps(
-        img_torch_path=img_tensors_paths[index],
+        img_torch_path=img_tensors_path[index],
         heatmap_info=heatmap_infos[index],
     )
