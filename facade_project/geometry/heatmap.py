@@ -7,14 +7,14 @@ from facade_project import IMG_MAX_SIZE, LABEL_NAME_TO_VALUE, SIGMA, SIGMA_FIXED
 from facade_project.data.augmentation import tf_if
 
 
-def resize_heatmaps(inputs, targets=None):
+def resize_heatmaps(inputs, targets=None, max_size=IMG_MAX_SIZE):
     is_tensor = type(inputs) is torch.Tensor
     if is_tensor:
         h, w = inputs.shape[1:]
     else:
         w, h = inputs.size
 
-    ratio = IMG_MAX_SIZE / max(h, w)
+    ratio = max_size / max(h, w)
     resizer = T.Compose([
         tf_if(T.ToPILImage(), is_tensor),
         tf_if(T.Resize((round(h * ratio), round(w * ratio))), ratio != 1),
@@ -36,36 +36,40 @@ def points_to_cwh(points):
     return round(ctr.x), round(ctr.y), round(width), round(height)
 
 
-def label_me_to_heatmap(json_data, shape):
-    # img = img_b64_to_arr(json_data['imageData'])
-    height, width = shape[:2]
+def build_heatmaps(heatmap_info, max_size=None):
+    img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
+    ratio = 1
+    if max_size is not None:
+        ratio = max_size / max(img_height, img_width)
 
-    n_heatmaps = 3 * (len(LABEL_NAME_TO_VALUE) - 1)
-    heatmaps = torch.zeros((n_heatmaps, height, width))
+    img_height = round(ratio * img_height)
+    img_width = round(ratio * img_width)
+    n_heatmaps = 3 * (len(LABEL_NAME_TO_VALUE) - 1)  # no heatmap for the background class
+    heatmaps = torch.zeros((n_heatmaps, img_height, img_width))
 
     meshgrids = torch.meshgrid(
-        [torch.arange(size, dtype=torch.float32) for size in [height, width]]
+        [torch.arange(size, dtype=torch.float32) for size in [img_height, img_width]]
     )
 
-    for shape in json_data['shapes']:
-        lbl = shape['label']
-        if lbl in LABEL_NAME_TO_VALUE:
-            points = shape['points']
-            c_x, c_y, w, h = points_to_cwh(points)
-            img_layer = 1
-            for mean, std, mgrid in zip([c_y, c_x], [h, w], meshgrids):
-                if SIGMA_FIXED:
-                    std = SIGMA
-                else:
-                    std //= SIGMA_SCALE
-                img_layer *= 1 / (std * math.sqrt(2 * math.pi)) * \
-                             torch.exp(-((mgrid - mean) / (2 * std)) ** 2)
-            img_layer = img_layer / torch.max(img_layer)
+    for cwh in heatmap_info['cwh_list']:
+        heatmap_idx = LABEL_NAME_TO_VALUE[cwh['label']] - 1
+        center, w, h = cwh['center'], cwh['width'], cwh['height']
+        center = [round(c * ratio) for c in center][::-1]
+        w, h = round(ratio * w), round(ratio * h)
 
-            heatmap_idx = LABEL_NAME_TO_VALUE[lbl] - 1
-            heatmap_idx *= 3
+        img_layer = 1
+        for mean, std, mgrid in zip(center, [h, w], meshgrids):
+            if SIGMA_FIXED:
+                std = SIGMA
+                std = round(ratio * std)
+            else:
+                std //= SIGMA_SCALE
+            img_layer *= 1 / (std * math.sqrt(2 * math.pi)) * \
+                         torch.exp(-((mgrid - mean) / (2 * std)) ** 2)
+        img_layer = img_layer / torch.max(img_layer)
 
-            heatmaps[heatmap_idx] += img_layer
-            heatmaps[heatmap_idx + 1] += img_layer * w
-            heatmaps[heatmap_idx + 2] += img_layer * h
+        heatmap_idx *= 3
+        heatmaps[heatmap_idx] += img_layer
+        heatmaps[heatmap_idx + 1] += img_layer * w
+        heatmaps[heatmap_idx + 2] += img_layer * h
     return heatmaps
