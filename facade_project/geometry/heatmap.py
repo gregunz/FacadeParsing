@@ -59,6 +59,7 @@ def build_heatmaps(heatmap_info, max_size=None, label_name_to_value=LABEL_NAME_T
 
         img_layer = 1
         for mean, std, mgrid in zip(center, [h, w], meshgrids):
+            # TODO: don't use constants inside the function directly
             if SIGMA_FIXED:
                 std = SIGMA
                 std = round(ratio * std)
