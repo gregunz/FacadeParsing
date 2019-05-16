@@ -11,7 +11,7 @@ from facade_project.utils.tqdm_ml import Epocher
 
 
 def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, device, criterion, optimizer, scheduler,
-                writer=None, num_epoch=25, keep_n_best=3, verbose=True):
+                writer=None, num_epoch=25, keep_n_best=3, verbose=True, label_name_to_value=LABEL_NAME_TO_VALUE):
     since = time.time()
 
     epoch_offset = 1  # because we start at 1 and not 0
@@ -70,7 +70,7 @@ def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, dev
                     if writer:
                         x_axis = data_idx + epoch * dataset_sizes[phase]
                         writer.add_scalar('{}_loss'.format(phase), loss_scalar, x_axis)
-                        for name, value in LABEL_NAME_TO_VALUE.items():
+                        for name, value in label_name_to_value.items():
                             writer.add_scalar('{}_jacc_{}'.format(phase, name), jacc_scalars[value], x_axis)
 
                 epoch_loss = running_loss / dataset_sizes[phase]
@@ -78,7 +78,7 @@ def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, dev
                 epoch_jacc_mean = epoch_jacc.mean().item()
 
                 if verbose:
-                    jacc_list = ['{}: {:.4f}'.format(n, epoch_jacc[v].item()) for n, v in LABEL_NAME_TO_VALUE.items()]
+                    jacc_list = ['{}: {:.4f}'.format(n, epoch_jacc[v].item()) for n, v in label_name_to_value.items()]
                     stats_string = '<{}> Loss: {:.4f} - MeanJacc: {:.4f} - JaccPerClass: ({})'.format(phase, epoch_loss,
                                                                                                       epoch_jacc_mean,
                                                                                                       ' '.join(

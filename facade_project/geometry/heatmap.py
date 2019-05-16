@@ -7,7 +7,7 @@ from facade_project import IMG_MAX_SIZE, LABEL_NAME_TO_VALUE, SIGMA, SIGMA_FIXED
 from facade_project.data.augmentation import tf_if
 
 
-def resize_heatmaps(inputs, targets=None, max_size=IMG_MAX_SIZE):
+def resize(inputs, targets=None, max_size=IMG_MAX_SIZE):
     is_tensor = type(inputs) is torch.Tensor
     if is_tensor:
         h, w = inputs.shape[1:]
@@ -36,7 +36,7 @@ def points_to_cwh(points):
     return round(ctr.x), round(ctr.y), round(width), round(height)
 
 
-def build_heatmaps(heatmap_info, max_size=None):
+def build_heatmaps(heatmap_info, max_size=None, label_name_to_value=LABEL_NAME_TO_VALUE):
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
     ratio = 1
     if max_size is not None:
@@ -44,7 +44,7 @@ def build_heatmaps(heatmap_info, max_size=None):
 
     img_height = round(ratio * img_height)
     img_width = round(ratio * img_width)
-    n_heatmaps = 3 * (len(LABEL_NAME_TO_VALUE) - 1)  # no heatmap for the background class
+    n_heatmaps = 3 * (len(label_name_to_value) - 1)  # no heatmap for the background class
     heatmaps = torch.zeros((n_heatmaps, img_height, img_width))
 
     meshgrids = torch.meshgrid(
@@ -52,7 +52,7 @@ def build_heatmaps(heatmap_info, max_size=None):
     )
 
     for cwh in heatmap_info['cwh_list']:
-        heatmap_idx = LABEL_NAME_TO_VALUE[cwh['label']] - 1
+        heatmap_idx = label_name_to_value[cwh['label']] - 1
         center, w, h = cwh['center'], cwh['width'], cwh['height']
         center = [round(c * ratio) for c in center][::-1]
         w, h = round(ratio * w), round(ratio * h)
@@ -64,8 +64,7 @@ def build_heatmaps(heatmap_info, max_size=None):
                 std = round(ratio * std)
             else:
                 std //= SIGMA_SCALE
-            img_layer *= 1 / (std * math.sqrt(2 * math.pi)) * \
-                         torch.exp(-((mgrid - mean) / (2 * std)) ** 2)
+            img_layer *= torch.exp(-((mgrid - mean) / (2 * std)) ** 2) / (std * math.sqrt(2 * math.pi))
         img_layer = img_layer / torch.max(img_layer)
 
         heatmap_idx *= 3

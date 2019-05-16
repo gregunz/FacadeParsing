@@ -11,7 +11,7 @@ from facade_project import LABEL_NAME_TO_VALUE
 class FacadesDatasetJson(Dataset):
     """Buildings dataset."""
 
-    def __init__(self, img_dir, transform=None):
+    def __init__(self, img_dir, transform=None, label_name_to_value=LABEL_NAME_TO_VALUE):
         """
         Args:
             img_dir (string): Directory with all the images with labels stored as json.
@@ -19,7 +19,7 @@ class FacadesDatasetJson(Dataset):
         """
         Dataset.__init__(self)
 
-        self.label_name_to_value = LABEL_NAME_TO_VALUE
+        self.label_name_to_value = label_name_to_value
 
         self.img_paths = [os.path.join(img_dir, filename) for filename in sorted(os.listdir(img_dir))]
         self.img_paths = [path for path in self.img_paths]

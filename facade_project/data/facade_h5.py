@@ -7,10 +7,10 @@ from facade_project import LABEL_NAME_TO_VALUE
 
 
 class FacadesDatasetH5Patches(Dataset):
-    def __init__(self, img_path):
+    def __init__(self, img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
         Dataset.__init__(self)
         h5_file = h5py.File(img_path, 'r')
-        self.labels = LABEL_NAME_TO_VALUE
+        self.labels = label_name_to_value
         self.data = h5_file.get('image')
         self.target = h5_file.get('label')
 
