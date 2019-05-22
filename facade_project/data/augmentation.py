@@ -1,33 +1,22 @@
 import random
 
 import PIL
-import math
 import torch
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from torch import Tensor
 
-from facade_project.geometry.image import rotated_rect_with_max_area
-
-
-def tf_if(tf, do_tf=False):
-    return T.Lambda(lambda img: tf(img) if do_tf else img)
+from facade_project.geometry.image import rotate
+from facade_project.utils.misc import tf_if
 
 
 def tuple_to_pil(img, lbl):
     return T.ToPILImage()(img), T.ToPILImage()(lbl)
 
 
-def random_rot(img, angle):
-    is_tensor = type(img) is Tensor
-
-    img_to_new_dim = lambda img: rotated_rect_with_max_area(*img.size, angle * math.pi / 180)[::-1]
-    return T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.Lambda(lambda img: TF.rotate(img, angle)),
-        T.Lambda(lambda img: T.CenterCrop(img_to_new_dim(img))(img)),
-        tf_if(T.ToTensor(), is_tensor),
-    ])(img)
+def random_rot(img, angle_limits, itp_name='BI'):
+    angle = random.randint(*angle_limits)
+    return rotate(img, angle, itp_name=itp_name)
 
 
 def random_crop_and_resize(img, crop_size, resize_size, is_label):

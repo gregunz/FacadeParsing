@@ -1,4 +1,3 @@
-from PIL import Image, ImageChops
 from torch import Tensor
 
 from facade_project import CUT_STEP, CUT_MARGIN
@@ -28,21 +27,23 @@ def find_limits(lbl, step, margin):
     return up, down, left, right
 
 
-def get_bbox(im):
-    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
-    diff = ImageChops.difference(im, bg)
-    diff = ImageChops.add(diff, diff)
-    bbox = diff.getbbox()
+def get_bbox(im, cut_margin=CUT_MARGIN):
+    # bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
+    # diff = ImageChops.difference(im, bg)
+    # diff = ImageChops.add(diff, diff)
+    bbox = im.getbbox()
+
+    w, h = im.size
+    bbox = max(0, bbox[0] - cut_margin), \
+           max(0, bbox[1] - cut_margin), \
+           min(w, bbox[2] + cut_margin), \
+           min(h, bbox[3] + cut_margin)
+
     return bbox
 
 
 def trim(im, bbox):
     if bbox:
-        w, h = im.size
-        bbox = max(0, bbox[0] - CUT_MARGIN), \
-               max(0, bbox[1] - CUT_MARGIN), \
-               min(w, bbox[2] + CUT_MARGIN), \
-               min(h, bbox[3] + CUT_MARGIN)
         return im.crop(bbox)
     return im
 

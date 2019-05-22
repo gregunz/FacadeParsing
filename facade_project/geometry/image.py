@@ -1,9 +1,12 @@
+import PIL
 import math
 import torch
 import torchvision.transforms as T
+import torchvision.transforms.functional as TF
+from torch import Tensor
 
 from facade_project import IMG_MAX_SIZE
-from facade_project.data.augmentation import tf_if
+from facade_project.utils.misc import tf_if
 
 
 def rotated_rect_with_max_area(w, h, angle):
@@ -34,15 +37,8 @@ def rotated_rect_with_max_area(w, h, angle):
     return wr, hr
 
 
-def resize(inputs, interpolation='BI', max_size=IMG_MAX_SIZE):
+def resize(inputs, itp_name='BI', max_size=IMG_MAX_SIZE):
     is_tensor = type(inputs) is torch.Tensor
-    if interpolation == 'BI':
-        interpolation = 2
-    elif interpolation == 'NN':
-        interpolation = 0
-    else:
-        assert False, 'interpolation not handled'
-
     if is_tensor:
         h, w = inputs.shape[1:]
     else:
@@ -52,6 +48,26 @@ def resize(inputs, interpolation='BI', max_size=IMG_MAX_SIZE):
 
     return T.Compose([
         tf_if(T.ToPILImage(), is_tensor),
-        tf_if(T.Resize((round(h * ratio), round(w * ratio)), interpolation=interpolation), ratio != 1),
+        tf_if(T.Resize((round(h * ratio), round(w * ratio)), interpolation=get_interpolation(itp_name)), ratio != 1),
         tf_if(T.ToTensor(), is_tensor),
     ])(inputs)
+
+
+def rotate(img, angle, itp_name='BI'):
+    is_tensor = type(img) is Tensor
+    img_to_new_dim = lambda img: rotated_rect_with_max_area(*img.size, angle * math.pi / 180)[::-1]
+    return T.Compose([
+        tf_if(T.ToPILImage(), is_tensor),
+        T.Lambda(lambda img: TF.rotate(img, angle, resample=get_interpolation(itp_name))),
+        T.Lambda(lambda img: T.CenterCrop(img_to_new_dim(img))(img)),
+        tf_if(T.ToTensor(), is_tensor),
+    ])(img)
+
+
+def get_interpolation(name):
+    if name == 'BI':
+        return PIL.Image.BILINEAR
+    elif name == 'NN':
+        return PIL.Image.NEAREST
+    else:
+        assert False, 'interpolation not handled'

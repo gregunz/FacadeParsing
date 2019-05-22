@@ -1,3 +1,6 @@
+from torchvision import transforms as T
+
+
 def to_square_crops(x, y, size):
     assert x % size == 0
     assert y % size == 0
@@ -21,3 +24,7 @@ def to_multiple_of_shape(x, y, m, max_size):
         n_x = round(x * n_max_size / y)
 
     return (n_x * m, n_y * m)
+
+
+def tf_if(tf, do_tf=False):
+    return T.Lambda(lambda img: tf(img) if do_tf else img)
