@@ -34,21 +34,24 @@ def rotated_rect_with_max_area(w, h, angle):
     return wr, hr
 
 
-def resize(inputs, targets=None, max_size=IMG_MAX_SIZE):
+def resize(inputs, interpolation='BI', max_size=IMG_MAX_SIZE):
     is_tensor = type(inputs) is torch.Tensor
+    if interpolation == 'BI':
+        interpolation = 2
+    elif interpolation == 'NN':
+        interpolation = 0
+    else:
+        assert False, 'interpolation not handled'
+
     if is_tensor:
         h, w = inputs.shape[1:]
     else:
         w, h = inputs.size
 
     ratio = max_size / max(h, w)
-    resizer = T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        tf_if(T.Resize((round(h * ratio), round(w * ratio))), ratio != 1),
-        tf_if(T.ToTensor(), is_tensor),
-    ])
 
-    if targets is None:
-        return resizer(inputs)
-    # TODO: NN interpolation for targets if it is a mask
-    return resizer(inputs), resizer(targets)
+    return T.Compose([
+        tf_if(T.ToPILImage(), is_tensor),
+        tf_if(T.Resize((round(h * ratio), round(w * ratio)), interpolation=interpolation), ratio != 1),
+        tf_if(T.ToTensor(), is_tensor),
+    ])(inputs)
