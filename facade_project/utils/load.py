@@ -6,12 +6,14 @@ import numpy as np
 import torch
 from labelme.utils import img_b64_to_arr
 
-from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, IMG_MAX_SIZE
+from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, IMG_MAX_SIZE, HEATMAP_INCLUDE_MASK
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
+from facade_project.geometry.image import resize
 
 # 000.torch because they are not rotated but only resized
-IMG_RESIZED_TENSORS_PATH = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
+IMG_RESIZED_TENSOR_PATHS = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
                             for i in range(NUM_IMAGES)]
+LBL_RESIZED_TENSORS_PATH = [p.replace('img_', 'lbl_') for p in IMG_RESIZED_TENSOR_PATHS]
 HEATMAP_INFOS = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
 
@@ -56,14 +58,20 @@ def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
     return info
 
 
-def __load_img_heatmaps(img_torch_path, heatmap_info):
-    img = torch.load(img_torch_path)
-    heatmaps = build_heatmaps(heatmap_info, max_size=max(img.shape[1:]))
+def load_img_heatmaps(
+        index,
+        img_tensor_paths=IMG_RESIZED_TENSOR_PATHS,
+        heatmap_infos=HEATMAP_INFOS,
+        mask_tensor_paths=LBL_RESIZED_TENSORS_PATH,
+        include_mask=HEATMAP_INCLUDE_MASK,
+        max_size=None,
+):
+    img = torch.load(img_tensor_paths[index])
+    if max_size is None:
+        max_size = max(img.shape[1:])
+    heatmaps = build_heatmaps(heatmap_infos[index], max_size=max_size)
+    if include_mask:
+        mask = torch.load(mask_tensor_paths[index])
+        mask = resize(mask, max_size=max_size)
+        heatmaps = torch.stack((heatmaps, mask).unsqueeze(0))
     return img, heatmaps
-
-
-def load_img_heatmaps(index, img_tensors_path=IMG_RESIZED_TENSORS_PATH, heatmap_infos=HEATMAP_INFOS):
-    return __load_img_heatmaps(
-        img_torch_path=img_tensors_path[index],
-        heatmap_info=heatmap_infos[index],
-    )

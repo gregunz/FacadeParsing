@@ -25,7 +25,8 @@ IS_SIGMA_FIXED = True
 SIGMA_FIXED = 50
 # When not fixed, widths and heights are used but requires scaling
 SIGMA_SCALE = 0.3
-
+HEATMAP_TYPES = ('center', 'width', 'height')
+HEATMAP_INCLUDE_MASK = False
 
 
 def to_name(name):

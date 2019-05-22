@@ -1,29 +1,14 @@
 import math
 import torch
 from shapely.geometry import Polygon
-from torchvision import transforms as T
 
-from facade_project import IMG_MAX_SIZE, LABEL_NAME_TO_VALUE, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE
-from facade_project.data.augmentation import tf_if
-
-
-def resize(inputs, targets=None, max_size=IMG_MAX_SIZE):
-    is_tensor = type(inputs) is torch.Tensor
-    if is_tensor:
-        h, w = inputs.shape[1:]
-    else:
-        w, h = inputs.size
-
-    ratio = max_size / max(h, w)
-    resizer = T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        tf_if(T.Resize((round(h * ratio), round(w * ratio))), ratio != 1),
-        tf_if(T.ToTensor(), is_tensor),
-    ])
-
-    if targets is None:
-        return resizer(inputs)
-    return resizer(inputs), resizer(targets)
+from facade_project import \
+    IMG_MAX_SIZE, \
+    LABEL_NAME_TO_VALUE, \
+    SIGMA_FIXED, \
+    IS_SIGMA_FIXED, \
+    SIGMA_SCALE, \
+    HEATMAP_TYPES
 
 
 def points_to_cwh(points):
@@ -38,11 +23,12 @@ def points_to_cwh(points):
 
 def build_heatmaps(
         heatmap_info,
-        max_size=None,
+        max_size=IMG_MAX_SIZE,
         label_name_to_value=LABEL_NAME_TO_VALUE,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
+        heatmaps_types=HEATMAP_TYPES,
 ):
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
     ratio = 1
@@ -51,7 +37,10 @@ def build_heatmaps(
 
     img_height = round(ratio * img_height)
     img_width = round(ratio * img_width)
-    n_heatmaps = 3 * (len(label_name_to_value) - 1)  # no heatmap for the background class
+    n_heatmaps_per_class = len([h for h in heatmaps_types if h in HEATMAP_TYPES])
+    assert n_heatmaps_per_class > 0, 'one must build at least one heatmap'
+
+    n_heatmaps = n_heatmaps_per_class * (len(label_name_to_value) - 1)  # no heatmap for the background class
     heatmaps = torch.zeros((n_heatmaps, img_height, img_width))
 
     meshgrids = torch.meshgrid(
@@ -75,7 +64,12 @@ def build_heatmaps(
         img_layer = img_layer / torch.max(img_layer)
 
         heatmap_idx *= 3
-        heatmaps[heatmap_idx] += img_layer
-        heatmaps[heatmap_idx + 1] += img_layer * w
-        heatmaps[heatmap_idx + 2] += img_layer * h
+        for name in heatmaps_types:
+            if name == HEATMAP_TYPES[0]:
+                heatmaps[heatmap_idx] += img_layer
+            if name == HEATMAP_TYPES[1]:
+                heatmaps[heatmap_idx + 1] += img_layer * w
+            if name == HEATMAP_TYPES[2]:
+                heatmaps[heatmap_idx + 2] += img_layer * h
+
     return heatmaps

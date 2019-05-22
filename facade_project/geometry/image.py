@@ -1,4 +1,9 @@
 import math
+import torch
+import torchvision.transforms as T
+
+from facade_project import IMG_MAX_SIZE
+from facade_project.data.augmentation import tf_if
 
 
 def rotated_rect_with_max_area(w, h, angle):
@@ -27,3 +32,23 @@ def rotated_rect_with_max_area(w, h, angle):
         wr, hr = (w * cos_a - h * sin_a) // cos_2a, (h * cos_a - w * sin_a) // cos_2a
 
     return wr, hr
+
+
+def resize(inputs, targets=None, max_size=IMG_MAX_SIZE):
+    is_tensor = type(inputs) is torch.Tensor
+    if is_tensor:
+        h, w = inputs.shape[1:]
+    else:
+        w, h = inputs.size
+
+    ratio = max_size / max(h, w)
+    resizer = T.Compose([
+        tf_if(T.ToPILImage(), is_tensor),
+        tf_if(T.Resize((round(h * ratio), round(w * ratio))), ratio != 1),
+        tf_if(T.ToTensor(), is_tensor),
+    ])
+
+    if targets is None:
+        return resizer(inputs)
+    # TODO: NN interpolation for targets if it is a mask
+    return resizer(inputs), resizer(targets)
