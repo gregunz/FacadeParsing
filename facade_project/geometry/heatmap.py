@@ -3,7 +3,7 @@ import torch
 from shapely.geometry import Polygon
 from torchvision import transforms as T
 
-from facade_project import IMG_MAX_SIZE, LABEL_NAME_TO_VALUE, SIGMA, SIGMA_FIXED, SIGMA_SCALE
+from facade_project import IMG_MAX_SIZE, LABEL_NAME_TO_VALUE, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE
 from facade_project.data.augmentation import tf_if
 
 
@@ -36,7 +36,14 @@ def points_to_cwh(points):
     return round(ctr.x), round(ctr.y), round(width), round(height)
 
 
-def build_heatmaps(heatmap_info, max_size=None, label_name_to_value=LABEL_NAME_TO_VALUE):
+def build_heatmaps(
+        heatmap_info,
+        max_size=None,
+        label_name_to_value=LABEL_NAME_TO_VALUE,
+        is_sigma_fixed=IS_SIGMA_FIXED,
+        sigma_fixed=SIGMA_FIXED,
+        sigma_scale=SIGMA_SCALE,
+):
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
     ratio = 1
     if max_size is not None:
@@ -59,12 +66,11 @@ def build_heatmaps(heatmap_info, max_size=None, label_name_to_value=LABEL_NAME_T
 
         img_layer = 1
         for mean, std, mgrid in zip(center, [h, w], meshgrids):
-            # TODO: don't use constants inside the function directly
-            if SIGMA_FIXED:
-                std = SIGMA
+            if is_sigma_fixed:
+                std = sigma_fixed
                 std = round(ratio * std)
             else:
-                std //= SIGMA_SCALE
+                std *= sigma_scale
             img_layer *= torch.exp(-((mgrid - mean) / (2 * std)) ** 2) / (std * math.sqrt(2 * math.pi))
         img_layer = img_layer / torch.max(img_layer)
 
