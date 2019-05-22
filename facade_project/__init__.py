@@ -21,11 +21,11 @@ CUT_STEP = 10
 CUT_MARGIN = 100
 
 # For the construction of the heatmaps
-IS_SIGMA_FIXED = True
-SIGMA_FIXED = 50
+IS_SIGMA_FIXED = False
+SIGMA_FIXED = 20
 # When not fixed, widths and heights are used but requires scaling
 SIGMA_SCALE = 0.3
-HEATMAP_TYPES = ('center', 'width', 'height')
+HEATMAP_TYPES = ('center',)
 HEATMAP_INCLUDE_MASK = False
 
 

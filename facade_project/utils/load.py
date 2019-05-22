@@ -14,6 +14,8 @@ from facade_project.geometry.image import resize
 IMG_RESIZED_TENSOR_PATHS = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
                             for i in range(NUM_IMAGES)]
 LBL_RESIZED_TENSORS_PATH = [p.replace('img_', 'lbl_') for p in IMG_RESIZED_TENSOR_PATHS]
+RESIZED_INFOS = pickle.load(open('{}/images/rot_aug_{}/images_infos.p'.format(PATH_TO_DATA, IMG_MAX_SIZE), mode='rb'))
+
 HEATMAP_INFOS = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
 
@@ -69,9 +71,11 @@ def load_img_heatmaps(
     img = torch.load(img_tensor_paths[index])
     if max_size is None:
         max_size = max(img.shape[1:])
-    heatmaps = build_heatmaps(heatmap_infos[index], max_size=max_size)
+    cropped_bbox = RESIZED_INFOS[(index, 0)]['cropped_bbox']
+    heatmaps = build_heatmaps(heatmap_infos[index], max_size=max_size, cropped_bbox=cropped_bbox)
     if include_mask:
         mask = torch.load(mask_tensor_paths[index])
         mask = resize(mask, max_size=max_size)
-        heatmaps = torch.stack((heatmaps, mask).unsqueeze(0))
+        mask = mask.float()  # same type as heatmaps
+        heatmaps = torch.cat([heatmaps, mask], dim=0)
     return img, heatmaps
