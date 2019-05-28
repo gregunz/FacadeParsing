@@ -19,6 +19,24 @@ def random_rot(img, angle_limits, itp_name='BI'):
     return rotate(img, angle, itp_name=itp_name)
 
 
+def random_crop(img, lbl, crop_size):
+    assert type(img) is torch.Tensor
+
+    if type(crop_size) is int:
+        crop_x, crop_y = crop_size, crop_size
+    else:
+        crop_x, crop_y = crop_size
+
+    h, w = img.shape[1:]
+    top = random.randint(0, h - crop_y)
+    left = random.randint(0, w - crop_x)
+    img = img[:, top:top + crop_y, left:left + crop_x]
+    lbl = lbl[:, top:top + crop_y, left:left + crop_x]
+
+    img = random_brightness_and_contrast(img)
+    return img, lbl
+
+
 def random_crop_and_resize(img, crop_size, resize_size, is_label):
     is_tensor = type(img) is Tensor
 
@@ -47,9 +65,8 @@ def random_flip(img, lbl, p=0.5):
         return img, lbl
 
 
-def random_brightness_and_contrast(img, lbl):
+def random_brightness_and_contrast(img):
     is_tensor = type(img) is Tensor
-    assert type(img) is type(lbl)
 
     contr_from = 0.75
     contr_factor = contr_from + random.random() * (2 - contr_from * 2)
@@ -62,8 +79,17 @@ def random_brightness_and_contrast(img, lbl):
         img = contr_factor * (img - 0.5) + 0.5
         # apply brightness
         img = img + (bright_factor - 1)
-        return torch.clamp(img, min=0, max=1), lbl
+        return torch.clamp(img, min=0, max=1)
     else:
         img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
         img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
+        return img
+
+
+def compose(transforms):
+    def sequential_apply(img, lbl):
+        for tf in transforms:
+            img, lbl = tf(img, lbl)
         return img, lbl
+
+    return sequential_apply

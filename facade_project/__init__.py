@@ -24,7 +24,7 @@ CUT_MARGIN = 100
 IS_SIGMA_FIXED = False
 SIGMA_FIXED = 20
 # When not fixed, widths and heights are used but requires scaling
-SIGMA_SCALE = 0.3
+SIGMA_SCALE = 0.2
 HEATMAP_TYPES = ('center',)
 HEATMAP_INCLUDE_MASK = False
 

@@ -1,9 +1,10 @@
+import copy
+
 import math
 import torch
 from shapely.geometry import Polygon
 
 from facade_project import \
-    IMG_MAX_SIZE, \
     LABEL_NAME_TO_VALUE, \
     SIGMA_FIXED, \
     IS_SIGMA_FIXED, \
@@ -22,7 +23,7 @@ def points_to_cwh(points):
 
 
 def crop_heatmap_info(info, bbox):
-    info = info.copy()
+    info = copy.deepcopy(info)
     tl_x, tl_y, br_x, br_y = bbox
 
     info['img_width'] = br_x - tl_x
@@ -33,39 +34,52 @@ def crop_heatmap_info(info, bbox):
     return info
 
 
-def resize_heatmap_info(info, max_size):
+def rescale_heatmap_info(info, max_size):
     ratio = max_size / max(info['img_width'], info['img_height'])
-    if ratio == 1:
+    return rescale_heatmap_info_with_ratios(info, ratio, ratio)
+
+
+def rescale_heatmap_info_with_ratios(info, width_ratio, height_ratio):
+    if width_ratio == 1 and height_ratio == 1:
         return info
-    info = info.copy()
-    info['img_width'] = round(ratio * info['img_width'])
-    info['img_height'] = round(ratio * info['img_height'])
+
+    info = copy.deepcopy(info)
+    info['img_width'] = round(width_ratio * info['img_width'])
+    info['img_height'] = round(height_ratio * info['img_height'])
     for cwh in info['cwh_list']:
-        cwh['width'] = round(ratio * cwh['width'])
-        cwh['height'] = round(ratio * cwh['height'])
-        cwh['center'] = tuple(round(ratio * c) for c in cwh['center'])
+        cwh['width'] = round(width_ratio * cwh['width'])
+        cwh['height'] = round(height_ratio * cwh['height'])
+        cwh['center'] = (cwh['center'][0] * width_ratio, cwh['center'][1] * height_ratio)
     return info
+
+
+def resize_heatmap_info(info, size):
+    if type(size) is int:
+        size = (size, size)
+    height_ratio = size[0] / info['img_height']
+    width_ratio = size[1] / info['img_width']
+    return rescale_heatmap_info_with_ratios(info, width_ratio=width_ratio, height_ratio=height_ratio)
 
 
 def build_heatmaps(
         heatmap_info,
         cropped_bbox=None,
-        max_size=IMG_MAX_SIZE,
+        size=None,
         label_name_to_value=LABEL_NAME_TO_VALUE,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
-        heatmaps_types=HEATMAP_TYPES,
+        heatmap_types=HEATMAP_TYPES,
 ):
     handled_heatmap_types = ('center', 'width', 'height')
 
-    n_heatmaps_per_class = len([h for h in heatmaps_types if h in handled_heatmap_types])
+    n_heatmaps_per_class = len([h for h in heatmap_types if h in handled_heatmap_types])
     assert n_heatmaps_per_class > 0, 'one must build at least one heatmap'
 
     if cropped_bbox is not None:
         heatmap_info = crop_heatmap_info(heatmap_info, cropped_bbox)
-    if max_size is not None:
-        heatmap_info = resize_heatmap_info(heatmap_info, max_size)
+    if size is not None:
+        heatmap_info = resize_heatmap_info(heatmap_info, size)
 
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
     n_heatmaps = n_heatmaps_per_class * (len(label_name_to_value) - 1)  # no heatmap for the background class
@@ -89,7 +103,7 @@ def build_heatmaps(
         img_layer = img_layer / torch.max(img_layer)
 
         heatmap_idx *= n_heatmaps_per_class
-        for name in heatmaps_types:
+        for name in heatmap_types:
             if name == 'center':
                 heatmaps[heatmap_idx] += img_layer
                 heatmap_idx += 1

@@ -6,15 +6,16 @@ import numpy as np
 import torch
 from labelme.utils import img_b64_to_arr
 
-from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, IMG_MAX_SIZE, HEATMAP_INCLUDE_MASK
+from facade_project import LABEL_NAME_TO_VALUE, PATH_TO_DATA, NUM_IMAGES, HEATMAP_INCLUDE_MASK, \
+    HEATMAP_TYPES, IS_SIGMA_FIXED, SIGMA_FIXED, SIGMA_SCALE
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 from facade_project.geometry.image import resize
 
 # 000.torch because they are not rotated but only resized
-IMG_RESIZED_TENSOR_PATHS = ['{}/images/rot_aug_{}/img_{:03d}_000.torch'.format(PATH_TO_DATA, IMG_MAX_SIZE, i) \
+IMG_RESIZED_TENSOR_PATHS = ['{}/images/rot_ratio/img_{:03d}_000.torch'.format(PATH_TO_DATA, i) \
                             for i in range(NUM_IMAGES)]
 LBL_RESIZED_TENSORS_PATH = [p.replace('img_', 'lbl_') for p in IMG_RESIZED_TENSOR_PATHS]
-RESIZED_INFOS = pickle.load(open('{}/images/rot_aug_{}/images_infos.p'.format(PATH_TO_DATA, IMG_MAX_SIZE), mode='rb'))
+RESIZED_INFOS = pickle.load(open('{}/images/rot_ratio/images_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
 HEATMAP_INFOS = pickle.load(open('{}/heatmaps/heatmaps_infos.p'.format(PATH_TO_DATA), mode='rb'))
 
@@ -66,16 +67,30 @@ def load_img_heatmaps(
         heatmap_infos=HEATMAP_INFOS,
         mask_tensor_paths=LBL_RESIZED_TENSORS_PATH,
         include_mask=HEATMAP_INCLUDE_MASK,
-        max_size=None,
+        size=None,
+        label_name_to_value=LABEL_NAME_TO_VALUE,
+        is_sigma_fixed=IS_SIGMA_FIXED,
+        sigma_fixed=SIGMA_FIXED,
+        sigma_scale=SIGMA_SCALE,
+        heatmap_types=HEATMAP_TYPES,
 ):
     img = torch.load(img_tensor_paths[index])
-    if max_size is None:
-        max_size = max(img.shape[1:])
+    if size is None:
+        size = img.shape[1:]
     cropped_bbox = RESIZED_INFOS[(index, 0)]['cropped_bbox']
-    heatmaps = build_heatmaps(heatmap_infos[index], max_size=max_size, cropped_bbox=cropped_bbox)
+    heatmaps = build_heatmaps(
+        heatmap_info=heatmap_infos[index],
+        size=size,
+        cropped_bbox=cropped_bbox,
+        label_name_to_value=label_name_to_value,
+        is_sigma_fixed=is_sigma_fixed,
+        sigma_fixed=sigma_fixed,
+        sigma_scale=sigma_scale,
+        heatmap_types=heatmap_types,
+    )
     if include_mask:
         mask = torch.load(mask_tensor_paths[index])
-        mask = resize(mask, max_size=max_size)
+        mask = resize(mask, size=size, itp_name='NN')
         mask = mask.float()  # same type as heatmaps
         heatmaps = torch.cat([heatmaps, mask], dim=0)
     return img, heatmaps
