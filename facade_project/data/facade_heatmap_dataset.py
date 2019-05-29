@@ -1,9 +1,8 @@
 from torch.utils.data import Dataset
 
-from facade_project import LABEL_NAME_TO_VALUE, HEATMAP_INCLUDE_MASK, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, \
+from facade_project import LABEL_NAME_TO_VALUE, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, \
     HEATMAP_TYPES
-from facade_project.utils.load import IMG_RESIZED_TENSOR_PATHS, HEATMAP_INFOS, load_img_heatmaps, \
-    LBL_RESIZED_TENSORS_PATH
+from facade_project.utils.load import IMG_000_PATHS, HEATMAPS_000_INFOS, load_img_heatmaps
 
 
 class FacadeHeatmapDataset(Dataset):
@@ -13,24 +12,17 @@ class FacadeHeatmapDataset(Dataset):
 
     def __init__(
             self,
-            img_tensor_paths=IMG_RESIZED_TENSOR_PATHS,
-            heatmap_infos=HEATMAP_INFOS,
-            mask_tensor_paths=LBL_RESIZED_TENSORS_PATH,
-            include_mask=HEATMAP_INCLUDE_MASK,
-            size=None,
+            img_tensor_paths=IMG_000_PATHS,
+            heatmap_infos=HEATMAPS_000_INFOS,
             label_name_to_value=LABEL_NAME_TO_VALUE,
             is_sigma_fixed=IS_SIGMA_FIXED,
             sigma_fixed=SIGMA_FIXED,
             sigma_scale=SIGMA_SCALE,
             heatmap_types=HEATMAP_TYPES
-
     ):
         Dataset.__init__(self)
         self.img_tensor_paths = img_tensor_paths
         self.heatmap_infos = heatmap_infos
-        self.mask_tensor_paths = mask_tensor_paths
-        self.include_mask = include_mask
-        self.size = size
         self.label_name_to_value = label_name_to_value
         self.is_sigma_fixed = is_sigma_fixed
         self.sigma_fixed = sigma_fixed
@@ -42,9 +34,6 @@ class FacadeHeatmapDataset(Dataset):
             index=index,
             img_tensor_paths=self.img_tensor_paths,
             heatmap_infos=self.heatmap_infos,
-            mask_tensor_paths=self.mask_tensor_paths,
-            include_mask=self.include_mask,
-            size=self.size,
             label_name_to_value=self.label_name_to_value,
             is_sigma_fixed=self.is_sigma_fixed,
             sigma_fixed=self.sigma_fixed,

@@ -34,7 +34,7 @@ def rotated_rect_with_max_area(w, h, angle):
         cos_2a = cos_a * cos_a - sin_a * sin_a
         wr, hr = (w * cos_a - h * sin_a) // cos_2a, (h * cos_a - w * sin_a) // cos_2a
 
-    return wr, hr
+    return round(wr), round(hr)
 
 
 def rescale(inputs, max_size=IMG_MAX_SIZE, itp_name='BI'):
@@ -80,7 +80,7 @@ def rotate(img, angle, itp_name='BI'):
     img_to_new_dim = lambda img: rotated_rect_with_max_area(*img.size, angle * math.pi / 180)[::-1]
     return T.Compose([
         tf_if(T.ToPILImage(), is_tensor),
-        T.Lambda(lambda img: TF.rotate(img, angle, resample=get_interpolation(itp_name))),
+        T.Lambda(lambda img: TF.rotate(img, angle, resample=get_interpolation(itp_name), expand=False)),
         T.Lambda(lambda img: T.CenterCrop(img_to_new_dim(img))(img)),
         tf_if(T.ToTensor(), is_tensor),
     ])(img)

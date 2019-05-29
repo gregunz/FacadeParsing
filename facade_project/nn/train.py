@@ -10,7 +10,7 @@ from facade_project.nn.metrics import jaccard_index
 from facade_project.utils.tqdm_ml import Epocher
 
 
-def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, device, criterion, optimizer, scheduler,
+def train_model(dataloaders, path_to_data, model_name, model, device, criterion, optimizer, scheduler,
                 writer=None, num_epoch=25, keep_n_best=3, verbose=True, label_name_to_value=LABEL_NAME_TO_VALUE):
     since = time.time()
 
@@ -68,13 +68,13 @@ def train_model(dataloaders, dataset_sizes, path_to_data, model_name, model, dev
 
                     # tensorboard
                     if writer:
-                        x_axis = data_idx + epoch * dataset_sizes[phase]
+                        x_axis = data_idx + epoch * len(dataloaders[phase])
                         writer.add_scalar('{}_loss'.format(phase), loss_scalar, x_axis)
                         for name, value in label_name_to_value.items():
                             writer.add_scalar('{}_jacc_{}'.format(phase, name), jacc_scalars[value], x_axis)
 
-                epoch_loss = running_loss / dataset_sizes[phase]
-                epoch_jacc = running_jacc / dataset_sizes[phase]
+                epoch_loss = running_loss / len(dataloaders[phase])
+                epoch_jacc = running_jacc / len(dataloaders[phase])
                 epoch_jacc_mean = epoch_jacc.mean().item()
 
                 if verbose:

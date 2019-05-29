@@ -6,6 +6,8 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from torch import Tensor
 
+from facade_project import LABEL_NAME_TO_VALUE, IS_SIGMA_FIXED, SIGMA_FIXED, HEATMAP_TYPES, SIGMA_SCALE
+from facade_project.geometry.heatmap import build_heatmaps
 from facade_project.geometry.image import rotate
 from facade_project.utils.misc import tf_if
 
@@ -84,6 +86,30 @@ def random_brightness_and_contrast(img):
         img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
         img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
         return img
+
+
+def add_heatmaps(
+        img,
+        lbl,
+        heatmaps_info,
+        label_name_to_value=LABEL_NAME_TO_VALUE,
+        is_sigma_fixed=IS_SIGMA_FIXED,
+        sigma_fixed=SIGMA_FIXED,
+        sigma_scale=SIGMA_SCALE,
+        heatmap_types=HEATMAP_TYPES,
+):
+    is_tensor = type(img) is Tensor
+    assert is_tensor, 'img should be a tensor'
+
+    heatmaps = build_heatmaps(
+        heatmap_info=heatmaps_info,
+        label_name_to_value=label_name_to_value,
+        is_sigma_fixed=is_sigma_fixed,
+        sigma_fixed=sigma_fixed,
+        sigma_scale=sigma_scale,
+        heatmap_types=heatmap_types,
+    )
+    raise NotImplementedError()
 
 
 def compose(transforms):

@@ -7,8 +7,10 @@ from labelme import utils
 from tqdm.auto import tqdm
 
 
-class labelme2coco(object):
-    def __init__(self, labelme_json=[], save_json_path='./new.json', only_labels=None, save_img_dir=None):
+class Labelme2coco(object):
+    def __init__(self, labelme_json=None, save_json_path='./new.json', only_labels=None, save_img_dir=None):
+        if labelme_json is None:
+            labelme_json = []
         self.labelme_json = labelme_json
         self.save_json_path = save_json_path
         self.only_labels = only_labels
