@@ -8,7 +8,7 @@ from tensorboardX import SummaryWriter
 
 from facade_project import SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, PATH_TO_DATA, LABEL_NAME_TO_VALUE, \
     FACADE_ROT_HEATMAPS_INFOS_PATH, FACADE_ROT_DIR
-from facade_project.data import FacadeDatasetRandomRot, TransformedDataset, split, to_dataloader
+from facade_project.data import FacadeRandomRotDataset, TransformedDataset, split, to_dataloader
 from facade_project.data.augmentation import random_brightness_and_contrast, random_crop, random_flip, compose
 from facade_project.geometry.heatmap import build_heatmaps
 from facade_project.nn.losses import facade_criterion
@@ -48,7 +48,7 @@ def main(args):
 
     with_heatmaps = 'center' in args.predictions or 'size' in args.predictions
 
-    facade_dataset = FacadeDatasetRandomRot(
+    facade_dataset = FacadeRandomRotDataset(
         img_dir=FACADE_ROT_DIR,
         add_aux_channels_fn=create_heatmaps if with_heatmaps else None,
         img_to_num_rot=None,

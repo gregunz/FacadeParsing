@@ -12,7 +12,7 @@ def create_img_to_num_rot(num_img, num_rot_per_img):
     return [num_rot_per_img for _ in range(num_img)]
 
 
-class FacadeDatasetRandomRot(Dataset):
+class FacadeRandomRotDataset(Dataset):
     # Note that this dataset cannot makes use the CachedDataset directly because it samples images within
     # the available rotations. Hence a caching is available directly and implemented here enable
     # sampling different rotations
@@ -36,7 +36,7 @@ class FacadeDatasetRandomRot(Dataset):
         if caching or init_caching:
             self.cached_images = dict()
             if init_caching:
-                for img_idx in tqdm(list(range(FacadeDatasetRandomRot.__len__(self)))):
+                for img_idx in tqdm(list(range(FacadeRandomRotDataset.__len__(self)))):
                     for rot_idx in range(NUM_ROTATIONS):
                         img, lbl = self.get_rot_item(img_idx, rot_idx)
                         self.cached_images[(img_idx, rot_idx)] = (img, lbl)
@@ -49,7 +49,7 @@ class FacadeDatasetRandomRot(Dataset):
         if self.cached_images is not None and (idx, rot_idx) in self.cached_images:
             img, lbl = self.cached_images[(idx, rot_idx)]
         else:
-            if idx >= FacadeDatasetRandomRot.__len__(self): raise IndexError
+            if idx >= FacadeRandomRotDataset.__len__(self): raise IndexError
             img, lbl = self.get_rot_item(idx, rot_idx)
             if self.cached_images is not None:
                 self.cached_images[(idx, rot_idx)] = (img, lbl)

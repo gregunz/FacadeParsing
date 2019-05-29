@@ -5,9 +5,9 @@ from torch.utils.data import Subset, DataLoader
 
 from facade_project import DEFAULT_SEED_SPLIT
 from facade_project.data.cached_dataset import CachedDataset
-from facade_project.data.facade_dataset_labelme import FacadeDatasetLabelme
 from facade_project.data.facade_heatmap_dataset import FacadeHeatmapDataset
-from facade_project.data.facade_random_rot_dataset import FacadeDatasetRandomRot
+from facade_project.data.facade_labelme_dataset import FacadeLabelmeDataset
+from facade_project.data.facade_random_rot_dataset import FacadeRandomRotDataset
 from facade_project.data.transformed_dataset import TransformedDataset
 
 
