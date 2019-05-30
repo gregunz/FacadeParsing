@@ -49,3 +49,53 @@ class Epocher:
     def print(self, s, sep=' '):
         self.s_more = sep + s.replace('\n', '')
         self.update_stdout()
+
+
+class MetricHandler:
+    def __init__(self):
+        raise NotImplementedError()
+
+    def add(self, outputs, targets):
+        """
+        Adding metric for each batch
+
+        :param outputs: outputs of the model
+        :param targets: targets of the model
+        :return:
+        """
+        raise NotImplementedError()
+
+    def compute(self, phase, dataset_size):
+        """
+        Aggregate accumulated metrics over batches at the end of the epoch
+
+        :param phase: either 'train' or 'val'
+        :param dataset_size: size of the dataset
+        :return: bool, whether the aggregated results are the best yet.
+        """
+        raise NotImplementedError()
+
+    def description(self):
+        """
+        Description of the current metrics
+
+        :return: str
+        """
+        raise NotImplementedError()
+
+    def scalar_infos(self, phase):
+        """
+        Return list of tuple to use with tensorboard writer object 'add_scalar' function
+
+        :param phase: either 'train' or 'val'
+        :return: [tuple(str, number)]
+        """
+        raise NotImplementedError()
+
+    def description_best(self):
+        """
+        Description of the best metrics
+
+        :return: str
+        """
+        raise NotImplementedError()
