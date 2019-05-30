@@ -9,7 +9,17 @@ from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES, IS_SI
     FACADE_ROT_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 
-HEATMAP_INFOS_PER_ROT = json.load(open('{}/heatmaps_infos.json'.format(FACADE_ROT_HEATMAPS_INFOS_PATH), mode='r'))
+
+def load_infos_per_rot(path):
+    all_infos = json.load(open(path, mode='r'))
+    return {
+        int(k): {
+            int(k2): v2 for k2, v2 in info_for_each_rot.items()
+        } for k, info_for_each_rot in all_infos.items()
+    }
+
+
+HEATMAP_INFOS_PER_ROT = load_infos_per_rot(path=FACADE_ROT_HEATMAPS_INFOS_PATH)
 
 # 000.torch because they are not rotated but only resized
 IMG_000_PATHS = ['{}/img_{:03d}_000.torch'.format(FACADE_ROT_DIR, i) for i in range(NUM_IMAGES)]
