@@ -20,7 +20,7 @@ class FacadeRandomRotDataset(Dataset):
                  init_caching=False):
         Dataset.__init__(self)
         self.dir_path = img_dir
-        self.add_auxiliary_channels_fn = add_aux_channels_fn
+        self.aux_targets_fn = add_aux_channels_fn
         if img_to_num_rot is None:
             img_to_num_rot = create_img_to_num_rot(NUM_IMAGES, NUM_ROTATIONS)
         self.img_to_num_rot = img_to_num_rot
@@ -58,11 +58,15 @@ class FacadeRandomRotDataset(Dataset):
     def get_rot_item(self, idx, rot_idx):
         img, lbl = torch.load(self.get_filename(idx, rot_idx, True)), \
                    torch.load(self.get_filename(idx, rot_idx, False))
-        if self.add_auxiliary_channels_fn is not None:
-            aux_channels = self.add_auxiliary_channels_fn(idx, rot_idx)
-            # .float() needed here because heatmaps are floats
-            lbl = torch.cat([lbl.float(), aux_channels], dim=0)
-        return img, lbl
+        targets = lbl
+        if self.aux_targets_fn is not None:
+            targets = {
+                'mask': lbl,
+            }
+            aux_targets = self.aux_targets_fn(idx, rot_idx)
+            assert type(aux_targets) is dict
+            targets.update(aux_targets)
+        return img, targets
 
     def get_filename(self, img_idx, rot_idx, is_img):
         name = 'img' if is_img else 'lbl'

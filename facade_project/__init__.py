@@ -21,7 +21,7 @@ IS_SIGMA_FIXED = False
 SIGMA_FIXED = 20
 # When not fixed, widths and heights are used but requires scaling
 SIGMA_SCALE = 0.2
-HEATMAP_TYPES = ('center', 'size')
+HEATMAP_TYPES = ('center', 'width', 'height')
 HEATMAP_INCLUDE_MASK = False
 
 DEFAULT_SEED_SPLIT = 238122

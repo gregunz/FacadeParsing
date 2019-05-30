@@ -99,17 +99,14 @@ def build_heatmaps(
         sigma_scale=SIGMA_SCALE,
         heatmap_types=HEATMAP_TYPES,
 ):
-    n_heatmaps_per_class = 0
-    for type in set(heatmap_types):
-        if type == 'center':
-            n_heatmaps_per_class += 1
-        if type == 'size':
-            n_heatmaps_per_class += 2  # one for width, one for height
-    assert n_heatmaps_per_class > 0, 'one must build at least one heatmap'
+    heatmap_types = [type for type in heatmap_types if type in ('center', 'height', 'width')]
+    assert len(heatmap_types) > 0, 'one must build at least one heatmap'
 
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
-    n_heatmaps = n_heatmaps_per_class * (len(label_name_to_value) - 1)  # no heatmap for the background class
-    heatmaps = torch.zeros((n_heatmaps, img_height, img_width))
+    n_classes = (len(label_name_to_value) - 1)  # no heatmap for the background class
+    heatmaps = {
+        type: torch.zeros(n_classes, img_height, img_width) for type in heatmap_types
+    }
 
     meshgrids = torch.meshgrid(
         [torch.arange(size, dtype=torch.float32) for size in [img_height, img_width]]
@@ -117,7 +114,7 @@ def build_heatmaps(
 
     for cwh in heatmap_info['cwh_list']:
         if cwh['label'] in label_name_to_value:
-            heatmap_idx = label_name_to_value[cwh['label']] - 1
+            heatmap_idx = label_name_to_value[cwh['label']] - 1  # 0 is background, hence a shift of 1
             center = cwh['center'][::-1]  # x and y instead of y and x
             h, w = cwh['height'], cwh['width']
             img_layer = 1
@@ -129,14 +126,14 @@ def build_heatmaps(
                 img_layer *= torch.exp(-((mgrid - mean) / (2 * std)) ** 2) / (std * math.sqrt(2 * math.pi))
             img_layer = img_layer / torch.max(img_layer)
 
-            heatmap_idx *= n_heatmaps_per_class
             for name in heatmap_types:
                 if name == 'center':
-                    heatmaps[heatmap_idx] += img_layer
+                    heatmaps[name][heatmap_idx] += img_layer
+                elif name == 'width':
+                    heatmaps[name][heatmap_idx] += img_layer * w
                     heatmap_idx += 1
-                elif name == 'size':
-                    heatmaps[heatmap_idx] += img_layer * w
-                    heatmaps[heatmap_idx + 1] += img_layer * h
+                elif name == 'height':
+                    heatmaps[name][heatmap_idx] += img_layer * h
                 else:
                     print('WARNING: unexpected heatmap type: {}'.format(name))
 
