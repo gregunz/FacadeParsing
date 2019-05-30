@@ -42,9 +42,6 @@ def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEF
 # Helper function to show a batch
 def show_batch(images_batch, labels_batch, label_names, nrow=2, fig_size=DEFAULT_FIG_SIZE):
     """Show labeled image for a batch of samples."""
-    batch_size = len(images_batch)
-    im_size = images_batch.size(2)
-
     img_grid = utils.make_grid(images_batch, nrow=nrow)
     img_grid = img_grid.numpy().transpose((1, 2, 0))
 
@@ -57,6 +54,7 @@ def show_batch(images_batch, labels_batch, label_names, nrow=2, fig_size=DEFAULT
     plt.title('Batch from dataloader')
 
 
-def show_channels(img, nrow=2, fig_size=DEFAULT_FIG_SIZE):
-    img_grid = utils.make_grid(img, nrow=nrow)
+def show_channels(img, nrow=3, fig_size=DEFAULT_FIG_SIZE):
+    channels = [img[i].unsqueeze(0) / img[i].max() for i in range(img.size(0))]
+    img_grid = utils.make_grid(channels, nrow=nrow)
     show_img(img_grid, fig_size)
