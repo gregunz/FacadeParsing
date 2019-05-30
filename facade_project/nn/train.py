@@ -5,13 +5,11 @@ import time
 
 import torch
 
-from facade_project import LABEL_NAME_TO_VALUE
-from facade_project.nn.metrics import jaccard_index
-from facade_project.utils.tqdm_ml import Epocher
+from facade_project.utils.ml_utils import Epocher
 
 
 def train_model(dataloaders, path_to_data, model_name, model, device, criterion, optimizer, scheduler,
-                writer=None, num_epoch=25, keep_n_best=3, verbose=True, label_name_to_value=LABEL_NAME_TO_VALUE):
+                metric_handler=None, writer=None, num_epoch=25, keep_n_best=3, verbose=True):
     since = time.time()
 
     epoch_offset = 1  # because we start at 1 and not 0
@@ -19,10 +17,8 @@ def train_model(dataloaders, path_to_data, model_name, model, device, criterion,
         epoch_offset += model.epoch_trained
 
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_jacc_mean = 0.0
-    best_loss = sys.maxsize
-
     best_model_paths = []
+    best_loss = sys.maxsize
 
     epocher = Epocher(num_epoch, epoch_offset=epoch_offset)
 
@@ -37,13 +33,12 @@ def train_model(dataloaders, path_to_data, model_name, model, device, criterion,
                     model.eval()  # Set model to evaluate mode
 
                 running_loss = 0.0
-                running_jacc = torch.tensor([0.0] * model.num_classes)
 
                 # Iterate over data.
-                for data_idx, (inputs, labels) in enumerate(dataloaders[phase]):
+                for data_idx, (inputs, targets) in enumerate(dataloaders[phase]):
                     epocher.print('{}: {}/{} batch'.format(phase, data_idx, len(dataloaders[phase])))
                     inputs = inputs.to(device)
-                    labels = labels.to(device).squeeze(1)
+                    targets = targets.to(device).squeeze(1)
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -53,7 +48,7 @@ def train_model(dataloaders, path_to_data, model_name, model, device, criterion,
                     with torch.set_grad_enabled(phase == 'train'):
                         outputs = model(inputs)
                         _, preds = torch.max(outputs, 1)
-                        loss = criterion(outputs, labels)
+                        loss = criterion(outputs, targets)
 
                         # backward + optimize only if in training phase
                         if phase == 'train':
@@ -63,31 +58,35 @@ def train_model(dataloaders, path_to_data, model_name, model, device, criterion,
                     # statistics
                     loss_scalar = loss.item() * inputs.size(0)
                     running_loss += loss_scalar
-                    jacc_scalars = jaccard_index(preds, labels, model.num_classes)
-                    running_jacc += jacc_scalars
 
-                    # tensorboard
-                    if writer:
-                        x_axis = data_idx + epoch * len(dataloaders[phase])
-                        writer.add_scalar('{}_loss'.format(phase), loss_scalar, x_axis)
-                        for name, value in label_name_to_value.items():
-                            writer.add_scalar('{}_jacc_{}'.format(phase, name), jacc_scalars[value], x_axis)
+                    # metric handler
+                    if metric_handler:
+                        metric_handler.add(outputs, targets)
 
                 epoch_loss = running_loss / len(dataloaders[phase])
-                epoch_jacc = running_jacc / len(dataloaders[phase])
-                epoch_jacc_mean = epoch_jacc.mean().item()
+
+                # tensorboard
+                if writer:
+                    x_axis = epoch
+                    writer.add_scalar('{}_loss'.format(phase), epoch_loss, x_axis)
+                    if metric_handler:
+                        for scalar_info in metric_handler.scalar_infos():
+                            writer.add_scalar(*scalar_info, x_axis)
+
+                # metric handler
+                is_best_metric = False
+                if metric_handler:
+                    is_best_metric = metric_handler.compute(phase=phase, dataset_size=len(dataloaders[phase]))
 
                 if verbose:
-                    jacc_list = ['{}: {:.4f}'.format(n, epoch_jacc[v].item()) for n, v in label_name_to_value.items()]
-                    stats_string = '<{}> Loss: {:.4f} - MeanJacc: {:.4f} - JaccPerClass: ({})'.format(phase, epoch_loss,
-                                                                                                      epoch_jacc_mean,
-                                                                                                      ' '.join(
-                                                                                                          jacc_list))
+                    metric_desc = ''
+                    if metric_handler:
+                        metric_desc = ' - {}'.format(metric_handler.description())
+                    stats_string = '<{}> Loss: {:.4f}{}'.format(phase, epoch_loss, metric_desc)
                     epocher.update_stats(stats_string)
 
                 # deep copy the model
-                if phase == 'val' and (epoch_loss < best_loss or epoch_jacc_mean > best_jacc_mean):
-                    best_jacc_mean = max(epoch_jacc_mean, best_jacc_mean)
+                if phase == 'val' and (epoch_loss < best_loss or is_best_metric):
                     best_loss = min(epoch_loss, best_loss)
                     model_path = '{}/models/model_{}_{}.torch'.format(path_to_data, model_name, epoch)
                     if len(best_model_paths) >= keep_n_best:
@@ -110,7 +109,8 @@ def train_model(dataloaders, path_to_data, model_name, model, device, criterion,
     print()
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
     print('Best val Loss: {:4f}'.format(best_loss))
-    print('Best val Jacc: {:4f}'.format(best_jacc_mean))
+    if metric_handler:
+        print(metric_handler.description_best())
 
     # load best model weights
     model.load_state_dict(best_model_wts)
