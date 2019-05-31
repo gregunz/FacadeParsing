@@ -12,8 +12,8 @@ class FacadeHeatmapDataset(Dataset):
 
     def __init__(
             self,
-            img_tensor_paths=IMG_000_PATHS,
-            heatmap_infos=HEATMAPS_000_INFOS,
+            img_tensor_paths=None,
+            heatmap_infos=None,
             label_name_to_value=LABEL_NAME_TO_VALUE,
             is_sigma_fixed=IS_SIGMA_FIXED,
             sigma_fixed=SIGMA_FIXED,
@@ -21,6 +21,12 @@ class FacadeHeatmapDataset(Dataset):
             heatmap_types=HEATMAP_TYPES
     ):
         Dataset.__init__(self)
+        if img_tensor_paths is None:
+            img_tensor_paths = IMG_000_PATHS
+        if heatmap_infos is None:
+            heatmap_infos = HEATMAPS_000_INFOS
+        assert len(img_tensor_paths) == len(heatmap_infos)
+
         self.img_tensor_paths = img_tensor_paths
         self.heatmap_infos = heatmap_infos
         self.label_name_to_value = label_name_to_value

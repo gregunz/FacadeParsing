@@ -6,110 +6,84 @@ import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from torch import Tensor
 
-from facade_project import LABEL_NAME_TO_VALUE, IS_SIGMA_FIXED, SIGMA_FIXED, HEATMAP_TYPES, SIGMA_SCALE
-from facade_project.geometry.heatmap import build_heatmaps
 from facade_project.geometry.image import rotate
-from facade_project.utils.misc import tf_if
 
 
 def tuple_to_pil(img, lbl):
     return T.ToPILImage()(img), T.ToPILImage()(lbl)
 
 
-def random_rot(img, angle_limits, itp_name='BI'):
-    angle = random.randint(*angle_limits)
-    return rotate(img, angle, itp_name=itp_name)
-
-
-def random_crop(img, lbl, crop_size):
-    assert type(img) is torch.Tensor
-
-    if type(crop_size) is int:
-        crop_x, crop_y = crop_size, crop_size
-    else:
-        crop_x, crop_y = crop_size
-
-    h, w = img.shape[1:]
-    top = random.randint(0, h - crop_y)
-    left = random.randint(0, w - crop_x)
-    img = img[:, top:top + crop_y, left:left + crop_x]
-    lbl = lbl[:, top:top + crop_y, left:left + crop_x]
-
-    img = random_brightness_and_contrast(img)
-    return img, lbl
-
-
-def random_crop_and_resize(img, crop_size, resize_size, is_label):
-    is_tensor = type(img) is Tensor
-
-    itp = 0 if is_label else 2  # 0 is nearest, 2 is bilinear interpolation
-
-    return T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.RandomCrop(crop_size),
-        tf_if(T.Resize(resize_size, interpolation=itp), crop_size != resize_size),
-        tf_if(T.ToTensor(), is_tensor),
-    ])(img)
-
-
-def random_flip(img, lbl, p=0.5):
-    is_tensor = type(img) is Tensor
-    assert type(img) is type(lbl)
-
-    if random.random() < p:
-        tf = T.Compose([
-            tf_if(T.ToPILImage(), is_tensor),
-            T.Lambda(lambda img: TF.hflip(img)),
-            tf_if(T.ToTensor(), is_tensor),
-        ])
+def random_rot(angle_limits, itp_name='BI'):
+    def random_rot_closure(img, lbl):
+        angle = random.randint(*angle_limits)
+        tf = lambda inputs: rotate(inputs, angle, itp_name=itp_name)
+        tf = handle_dict(tf)
         return tf(img), tf(lbl)
-    else:
-        return img, lbl
+
+    return random_rot_closure
 
 
-def random_brightness_and_contrast(img):
-    is_tensor = type(img) is Tensor
+def random_crop(crop_size):
+    def tf(inputs):
+        assert type(inputs) is torch.Tensor
 
-    contr_from = 0.75
-    contr_factor = contr_from + random.random() * (2 - contr_from * 2)
-    bright_from = 0.85
-    bright_factor = bright_from + random.random() * (2 - bright_from * 2)
+        if type(crop_size) is int:
+            crop_x, crop_y = crop_size, crop_size
+        else:
+            crop_x, crop_y = crop_size
 
-    # TODO inconsistencies: changes on tensor are not exactly the same as the one with PIL (scaling of factors)
-    if is_tensor:
-        # apply contrast
-        img = contr_factor * (img - 0.5) + 0.5
-        # apply brightness
-        img = img + (bright_factor - 1)
-        return torch.clamp(img, min=0, max=1)
-    else:
-        img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
-        img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
-        return img
+        h, w = inputs.shape[1:]
+        top = random.randint(0, h - crop_y)
+        left = random.randint(0, w - crop_x)
+        inputs = inputs[:, top:top + crop_y, left:left + crop_x]
+
+        return inputs
+
+    tf = handle_dict(tf)
+
+    def random_crop_closure(img, lbl):
+        return tf(img), tf(lbl)
+
+    return random_crop_closure
 
 
-def add_heatmaps(
-        img,
-        lbl,
-        heatmaps_info,
-        label_name_to_value=LABEL_NAME_TO_VALUE,
-        is_sigma_fixed=IS_SIGMA_FIXED,
-        sigma_fixed=SIGMA_FIXED,
-        sigma_scale=SIGMA_SCALE,
-        heatmap_types=HEATMAP_TYPES,
-):
-    is_tensor = type(img) is Tensor
-    assert is_tensor, 'img should be a tensor'
+def random_flip(p=0.5):
+    def random_flip_closure(img, lbl):
+        is_tensor = type(img) is Tensor
 
-    heatmaps = build_heatmaps(
-        heatmap_info=heatmaps_info,
-        label_name_to_value=label_name_to_value,
-        is_sigma_fixed=is_sigma_fixed,
-        sigma_fixed=sigma_fixed,
-        sigma_scale=sigma_scale,
-        heatmap_types=heatmap_types,
-    )
-    raise NotImplementedError()
+        if random.random() < p:
+            if is_tensor:
+                tf = lambda x: x  # TODO handle tensor flip
+            else:
+                tf = TF.hflip
+
+            tf = handle_dict(tf)
+            return tf(img), tf(lbl)
+        else:
+            return img, lbl
+
+    return random_flip_closure
+
+
+def random_brightness_and_contrast(contrast_from=0.75, brightness_from=0.85):
+    def random_brightness_and_contrast_closure(img):
+        is_tensor = type(img) is Tensor
+        contr_factor = contrast_from + random.random() * (2 - contrast_from * 2)
+        bright_factor = brightness_from + random.random() * (2 - brightness_from * 2)
+
+        # TODO inconsistencies: changes on tensor are not exactly the same as the one with PIL (scaling of factors)
+        if is_tensor:
+            # apply contrast
+            img = contr_factor * (img - 0.5) + 0.5
+            # apply brightness
+            img = img + (bright_factor - 1)
+            return torch.clamp(img, min=0, max=1)
+        else:
+            img = PIL.ImageEnhance.Contrast(img).enhance(contr_factor)
+            img = PIL.ImageEnhance.Brightness(img).enhance(bright_factor)
+            return img
+
+    return random_brightness_and_contrast_closure
 
 
 def compose(transforms):
@@ -119,3 +93,12 @@ def compose(transforms):
         return img, lbl
 
     return sequential_apply
+
+
+def handle_dict(tf):
+    def tf_handling_dict(inputs):
+        if type(inputs) is dict:
+            return {k: tf(v) for k, v in inputs.items()}
+        return tf(inputs)
+
+    return tf_handling_dict

@@ -7,6 +7,7 @@ def jaccard_index(pred, target, n_classes):
     ious = []
     pred = pred.view(-1)
     target = target.view(-1)
+    assert pred.shape == target.shape, '{} != {}'.format(pred.shape, target.shape)
 
     # Ignore IoU for background class ("0")
     # for cls in range(1, n_classes):  # This goes from 1:n_classes-1 -> class "0" is ignored
@@ -50,7 +51,7 @@ class FacadeMetric(MetricHandler):
 
         for p in self.predictions_list:
             if p == 'mask':
-                _, preds = torch.max(outputs[:self.n_classes], 1)
+                _, preds = torch.max(outputs[:, :self.n_classes], 1)
                 self.metric_dict['jacc_run'] += jaccard_index(preds, targets['mask'], self.n_classes)
             elif p == 'center':
                 pass

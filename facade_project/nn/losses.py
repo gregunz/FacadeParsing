@@ -15,6 +15,7 @@ def dice_loss(logits, true, eps=1e-7):
     Returns:
         dice_loss: the Sørensen–Dice loss.
     """
+    # assert logits.shape == true.shape
     num_classes = logits.shape[1]
     if num_classes == 1:
         true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
@@ -37,5 +38,38 @@ def dice_loss(logits, true, eps=1e-7):
     return (1 - dice_loss)
 
 
-def facade_criterion():
-    raise NotImplementedError()
+def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True):
+    def facade_criterion_closure(outputs, targets):
+        assert len(predictions_list) == len(predictions_weights)
+
+        losses = []
+        output_idx = 0
+        for p in predictions_list:
+            target = targets[p]
+
+            if p == 'mask':
+                output = outputs[:, output_idx:output_idx + num_classes]
+                output_idx += num_classes
+
+                if use_dice:
+                    losses.append(dice_loss(output, target))
+                else:
+                    losses.append(F.cross_entropy(output, target))
+
+            elif p == 'center' or p == 'width' or p == 'height':
+                n_channels = target.size(1)
+                output = outputs[:, output_idx:output_idx + n_channels]
+                output_idx += n_channels
+                losses.append(F.mse_loss(output, target))
+
+        assert output_idx == outputs.size(1), 'we used all the channels available for the loss'
+        loss = losses[0]
+        if len(losses) > 1:
+            for l in losses[1:]:
+                loss = loss + l
+
+        # loss_proportions = [(l / loss).item() for l in losses]
+        # print(losses, loss_proportions)
+        return loss
+
+    return facade_criterion_closure

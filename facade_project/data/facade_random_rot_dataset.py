@@ -57,7 +57,7 @@ class FacadeRandomRotDataset(Dataset):
 
     def get_rot_item(self, idx, rot_idx):
         img, lbl = torch.load(self.get_filename(idx, rot_idx, True)), \
-                   torch.load(self.get_filename(idx, rot_idx, False))
+                   torch.load(self.get_filename(idx, rot_idx, False)).long()
         targets = lbl
         if self.aux_targets_fn is not None:
             targets = {
