@@ -131,7 +131,6 @@ def build_heatmaps(
                     heatmaps[name][heatmap_idx] += img_layer
                 elif name == 'width':
                     heatmaps[name][heatmap_idx] += img_layer * w
-                    heatmap_idx += 1
                 elif name == 'height':
                     heatmaps[name][heatmap_idx] += img_layer * h
                 else:
