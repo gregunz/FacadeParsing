@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='FacadeParsing',
-      version='1.0.1',
+      version='1.0',
       description='Facade parsing project',
       author='Grégoire Clément',
       author_email='gregoire.clement@epfl.ch',

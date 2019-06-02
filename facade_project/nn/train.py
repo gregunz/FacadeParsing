@@ -94,7 +94,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                 # deep copy the model
                 if phase == 'val' and (epoch_loss < best_loss or is_best_metric):
                     best_loss = min(epoch_loss, best_loss)
-                    model_path = '{}/{}_{:03d}.torch'.format(path_weights, model_name, epoch)
+                    model_path = '{}/{}/weights_{:03d}.torch'.format(path_weights, model_name, epoch)
                     if len(best_model_paths) >= keep_n_best:
                         os.remove(best_model_paths.pop(0))
                     best_model_paths.append(model_path)
