@@ -69,7 +69,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                     if metric_handler:
                         metric_handler.add(outputs, targets)
 
-                epoch_loss = running_loss / len(dataloaders[phase])
+                epoch_loss = running_loss / len(dataloaders[phase].dataset)
 
                 # metric handler
                 is_best_metric = False
