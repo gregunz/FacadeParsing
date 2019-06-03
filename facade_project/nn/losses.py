@@ -35,7 +35,7 @@ def dice_loss(logits, true, eps=1e-7):
     intersection = torch.sum(probas * true_1_hot, dims)
     cardinality = torch.sum(probas + true_1_hot, dims)
     dice_loss = (2. * intersection / (cardinality + eps)).mean()
-    return (1 - dice_loss)
+    return 1 - dice_loss
 
 
 def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True):
@@ -63,13 +63,12 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 losses.append(F.mse_loss(output, F.relu(target)))
 
         assert output_idx == outputs.size(1), 'we used all the channels available for the loss'
+
         loss = losses[0]
         if len(losses) > 1:
             for l in losses[1:]:
                 loss = loss + l
 
-        # loss_proportions = [(l / loss).item() for l in losses]
-        # print(loss_proportions)
         return loss
 
     return facade_criterion_closure
