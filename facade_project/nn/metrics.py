@@ -33,8 +33,8 @@ class FacadeMetric(MetricHandler):
 
         for p in self.predictions_list:
             if p == 'mask':
-                self.metric_dict['jacc_best_mean'] = 0.0
-                self.metric_dict['jacc_run'] = torch.zeros(self.n_classes)
+                self.metric_dict['jacc_best_mean'] = torch.zeros(self.n_classes)
+                self.metric_dict['jacc_run'] = []
                 self.metric_dict['jacc_epoch_train'] = []
                 self.metric_dict['jacc_epoch_val'] = []
             elif p == 'center':
@@ -52,7 +52,7 @@ class FacadeMetric(MetricHandler):
         for p in self.predictions_list:
             if p == 'mask':
                 _, preds = torch.max(outputs[:, :self.n_classes], 1)
-                self.metric_dict['jacc_run'] += jaccard_index(preds, targets['mask'], self.n_classes)
+                self.metric_dict['jacc_run'].append(jaccard_index(preds, targets['mask'], self.n_classes))
             elif p == 'center':
                 pass
             elif p == 'width':
@@ -65,14 +65,14 @@ class FacadeMetric(MetricHandler):
 
         for p in self.predictions_list:
             if p == 'mask':
-                jacc_epoch = self.metric_dict['jacc_run'] / dataset_size
+                jacc_run_per_class = torch.stack(self.metric_dict['jacc_run']).unbind(dim=1)
+                jacc_epoch = torch.tensor([j[torch.isnan(j) == 0].mean() for j in jacc_run_per_class])
                 self.metric_dict['jacc_epoch_{}'.format(phase)].append(jacc_epoch)
                 # best jaccard is always on validation data
-                if phase == 'val':
-                    self.metric_dict['jacc_best_mean'] = max(jacc_epoch.mean().item(),
-                                                             self.metric_dict['jacc_best_mean'])
+                if phase == 'val' and self.last_is_best(phase):
+                    self.metric_dict['jacc_best_mean'] = jacc_epoch
                 # init running jaccard index
-                self.metric_dict['jacc_run'] = torch.zeros(self.n_classes)
+                self.metric_dict['jacc_run'] = []
             elif p == 'center':
                 pass
             elif p == 'width':
@@ -80,16 +80,13 @@ class FacadeMetric(MetricHandler):
             elif p == 'height':
                 pass
 
-    def description(self):
-        return ''
-
     def scalar_infos(self, phase):
         infos = []
         for p in self.predictions_list:
             if p == 'mask':
                 for name, value in self.label_name_to_value.items():
                     scalar_name = 'jacc_{}_{}'.format(name, phase)
-                    scalar = self.metric_dict['jacc_epoch_{}'.format(phase)][-1][value]
+                    scalar = self.metric_dict['jacc_epoch_{}'.format(phase)][-1][value].item()
                     infos.append((scalar_name, scalar))
             elif p == 'center':
                 pass
@@ -99,5 +96,20 @@ class FacadeMetric(MetricHandler):
                 pass
         return infos
 
+    def last_is_best(self, phase):
+        jacc_epochs = self.metric_dict['jacc_epoch_{}'.format(phase)]
+        jacc_epochs = [j.mean().item() for j in jacc_epochs]
+        if len(jacc_epochs) == 1:
+            return True
+        return jacc_epochs[-1] > max(jacc_epochs[:-1])
+
+    def description(self, phase):
+        return 'jacc_epoch_{} = [{:4f}, {:4f}, {:4f}, {:4f}]'.format(
+            phase,
+            *self.metric_dict['jacc_epoch_{}'.format(phase)][-1].tolist(),
+        )
+
     def description_best(self):
-        return ''
+        return 'jacc_best_mean = [{:4f}, {:4f}, {:4f}, {:4f}]'.format(
+            *self.metric_dict['jacc_best_mean'].tolist(),
+        )

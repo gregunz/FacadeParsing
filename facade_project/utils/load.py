@@ -6,7 +6,7 @@ import torch
 from labelme.utils import img_b64_to_arr
 
 from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES, IS_SIGMA_FIXED, SIGMA_FIXED, SIGMA_SCALE, \
-    FACADE_ROT_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH
+    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 
 
@@ -22,7 +22,7 @@ def load_infos_per_rot(path):
 HEATMAP_INFOS_PER_ROT = load_infos_per_rot(path=FACADE_ROT_HEATMAPS_INFOS_PATH)
 
 # 000.torch because they are not rotated but only resized
-IMG_000_PATHS = ['{}/img_{:03d}_000.torch'.format(FACADE_ROT_DIR, i) for i in range(NUM_IMAGES)]
+IMG_000_PATHS = ['{}/img_{:03d}_000.torch'.format(FACADE_ROT_IMAGES_TENSORS_DIR, i) for i in range(NUM_IMAGES)]
 HEATMAPS_000_INFOS = [HEATMAP_INFOS_PER_ROT[i][0] for i in range(len(IMG_000_PATHS))]
 
 
@@ -65,7 +65,6 @@ def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
                     'height': h,
                 })
     return info
-
 
 def load_img_heatmaps(
         index,

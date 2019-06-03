@@ -27,6 +27,9 @@ HEATMAP_INCLUDE_MASK = False
 DEFAULT_SEED_SPLIT = 238122
 
 # directories for the datasets
-FACADE_ROT_DIR = '{}/images/tensor/rotated_rescaled'.format(PATH_TO_DATA)
-FACADE_ROT_HEATMAPS_INFOS_PATH = '{}/heatmaps_infos.json'.format(FACADE_ROT_DIR)
-FACADE_HEATMAPS_DIR = '{}/heatmaps/tensor/rotated_rescaled'.format(PATH_TO_DATA)
+FACADE_IMAGES_DIR = '{}/images'.format(PATH_TO_DATA)
+FACADE_HEATMAPS_DIR = '{}/heatmaps'.format(PATH_TO_DATA)
+
+FACADE_ROT_IMAGES_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_IMAGES_DIR)
+FACADE_ROT_HEATMAPS_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_HEATMAPS_DIR)
+FACADE_ROT_HEATMAPS_INFOS_PATH = '{}/json/heatmaps_infos_rotated_rescaled.json'.format(FACADE_HEATMAPS_DIR)

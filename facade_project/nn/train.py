@@ -41,11 +41,12 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                 for data_idx, (inputs, targets) in enumerate(dataloaders[phase]):
                     epocher.print('{}: {}/{} batch'.format(phase, data_idx, len(dataloaders[phase])))
 
-                    inputs = inputs.to(device)
-                    if type(targets) is dict:
-                        targets = {k: v.to(device) for k, v in targets.items()}
-                    else:
-                        targets = targets.to(device)
+                    # now dataset should already load on GPU
+                    # inputs = inputs.to(device)
+                    # if type(targets) is dict:
+                    #    targets = {k: v.to(device) for k, v in targets.items()}
+                    # else:
+                    #    targets = targets.to(device)
 
                     # zero the parameter gradients
                     optimizer.zero_grad()
@@ -72,14 +73,13 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
 
                 # metric handler
-                is_best_metric = False
                 if metric_handler:
-                    is_best_metric = metric_handler.compute(phase=phase, dataset_size=len(dataloaders[phase]))
+                    metric_handler.compute(phase=phase, dataset_size=len(dataloaders[phase]))
 
                 if verbose:
                     metric_desc = ''
                     if metric_handler:
-                        metric_desc = ' - {}'.format(metric_handler.description())
+                        metric_desc = ' - {}'.format(metric_handler.description(phase))
                     stats_string = '<{}> Loss: {:.4f}{}'.format(phase, epoch_loss, metric_desc)
                     epocher.update_stats(stats_string)
 
@@ -92,7 +92,8 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                             writer.add_scalar(*scalar_info, x_axis)
 
                 # deep copy the model
-                if phase == 'val' and (epoch_loss < best_loss or is_best_metric):
+                metric_improved = metric_handler is not None and metric_handler.last_is_best(phase)
+                if phase == 'val' and (epoch_loss < best_loss or metric_improved):
                     best_loss = min(epoch_loss, best_loss)
                     model_path = '{}/{}/weights_{:03d}.torch'.format(path_weights, model_name, epoch)
                     if len(best_model_paths) >= keep_n_best:
@@ -100,9 +101,9 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                     best_model_paths.append(model_path)
 
                     torch.save(model.state_dict(), model_path)
-                    if verbose:
-                        ls_string = model_path
-                        epocher.update_ls(ls_string)
+                    # if verbose:
+                    #    ls_string = model_path
+                    #    epocher.update_ls(ls_string)
                     best_model_wts = copy.deepcopy(model.state_dict())
 
             if hasattr(model, 'epoch_trained'):

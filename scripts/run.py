@@ -9,7 +9,7 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 
 from facade_project import SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, PATH_TO_DATA, LABEL_NAME_TO_VALUE, \
-    FACADE_ROT_DIR, FACADE_HEATMAPS_DIR
+    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_TENSORS_DIR
 from facade_project.data import FacadeRandomRotDataset, TransformedDataset, split, to_dataloader
 from facade_project.data.augmentation import random_brightness_and_contrast, random_crop, random_flip, compose
 from facade_project.nn.losses import facade_criterion
@@ -48,6 +48,7 @@ def main(args):
         predictions=args.predictions,
         pred_weights=args.pred_weights,
     )
+    print('Run named {} started'.format(run_name_str))
     # make directory for model weights
     weights_dir_path = '{}/{}'.format(args.path_for_weights, run_name_str)
     os.mkdir(weights_dir_path)
@@ -58,37 +59,30 @@ def main(args):
         indent=4
     )
 
-    def create_heatmaps(img_idx, rot_idx):
-        """
-        info = HEATMAP_INFOS_PER_ROT[img_idx][rot_idx]
-        return build_heatmaps(
-            heatmap_info=info,
-            label_name_to_value=LABEL_NAME_TO_VALUE,
-            is_sigma_fixed=args.is_sigma_fixed,
-            sigma_fixed=args.sigma_fixed,
-            sigma_scale=args.sigma_scale,
-            heatmap_types=args.predictions
-        )
-        """
-
-        def get_filename(heatmap_type, idx, jdx):
-            return '{}/heatmaps_{}_{:03d}_{:03d}.torch'.format(FACADE_HEATMAPS_DIR, heatmap_type, idx, jdx)
-
-        return {
-            htype: torch.load(get_filename(htype, img_idx, rot_idx))
-            for htype in args.predictions if htype in ['center', 'width', 'height']
-        }
-
     with_heatmaps = 'center' in args.predictions \
                     or 'width' in args.predictions \
                     or 'height' in args.predictions
 
+    def create_heatmaps(img_idx, rot_idx, device):
+        if not with_heatmaps:
+            return dict()
+
+        def get_filename(heatmap_type, idx, jdx):
+            return '{}/heatmaps_{}_{:03d}_{:03d}.torch' \
+                .format(FACADE_ROT_HEATMAPS_TENSORS_DIR, heatmap_type, idx, jdx)
+
+        return {
+            htype: torch.load(get_filename(htype, img_idx, rot_idx), map_location=device)
+            for htype in args.predictions if htype in ['center', 'width', 'height']
+        }
+
     facade_dataset = FacadeRandomRotDataset(
-        img_dir=FACADE_ROT_DIR,
-        add_aux_channels_fn=create_heatmaps if with_heatmaps else None,
+        img_dir=FACADE_ROT_IMAGES_TENSORS_DIR,
+        add_aux_channels_fn=create_heatmaps,
         img_to_num_rot=None,
         caching=False,  # when true it takes quite a lot of RAM
         init_caching=False,
+        device=device,
     )
 
     tf = compose([
@@ -138,7 +132,7 @@ def main(args):
         predictions_list=args.predictions,
         predictions_weights=args.pred_weights,
         num_classes=len(LABEL_NAME_TO_VALUE),
-        use_dice=True
+        use_dice=args.use_dice,
     )
     with torch.cuda.device(device):
         model = train_model(
@@ -176,6 +170,7 @@ if __name__ == '__main__':
     parser.add_argument('--path-for-weights', action='store', dest='path_for_weights', type=str,
                         default='{}/models'.format(PATH_TO_DATA))
     parser.add_argument('--device', action='store', dest='device', type=str, default='cuda:0')
+    parser.add_argument('--use-dice', action='store', dest='use_dice', type=bool, default=True)
     # parser.add_argument('--', action='store', dest='', type=, default=)
 
     main(parser.parse_args())

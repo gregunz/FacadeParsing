@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
-from facade_project import NUM_IMAGES, NUM_ROTATIONS, FACADE_ROT_DIR
+from facade_project import NUM_IMAGES, NUM_ROTATIONS, FACADE_ROT_IMAGES_TENSORS_DIR
 
 
 def create_img_to_num_rot(num_img, num_rot_per_img):
@@ -16,8 +16,9 @@ class FacadeRandomRotDataset(Dataset):
     # Note that this dataset cannot makes use the CachedDataset directly because it samples images within
     # the available rotations. Hence a caching is available directly and implemented here enable
     # sampling different rotations
-    def __init__(self, img_dir=FACADE_ROT_DIR, add_aux_channels_fn=None, img_to_num_rot=None, caching=False,
-                 init_caching=False):
+    def __init__(self, img_dir=FACADE_ROT_IMAGES_TENSORS_DIR, add_aux_channels_fn=None, img_to_num_rot=None,
+                 caching=False,
+                 init_caching=False, device=None):
         Dataset.__init__(self)
         self.dir_path = img_dir
         self.aux_targets_fn = add_aux_channels_fn
@@ -25,6 +26,8 @@ class FacadeRandomRotDataset(Dataset):
             img_to_num_rot = create_img_to_num_rot(NUM_IMAGES, NUM_ROTATIONS)
         self.img_to_num_rot = img_to_num_rot
         self.cached_images = None
+        self.device = device
+        assert not (device is not None and (init_caching or caching)), 'cannot cache on GPU -> GPU_RAM'
 
         # checking all files exist
         for idx, num_rot in enumerate(self.img_to_num_rot):
@@ -56,14 +59,14 @@ class FacadeRandomRotDataset(Dataset):
         return img, lbl
 
     def get_rot_item(self, idx, rot_idx):
-        img, lbl = torch.load(self.get_filename(idx, rot_idx, True)), \
-                   torch.load(self.get_filename(idx, rot_idx, False)).long()
+        img, lbl = torch.load(self.get_filename(idx, rot_idx, True), map_location=self.device), \
+                   torch.load(self.get_filename(idx, rot_idx, False), map_location=self.device).long()
         targets = lbl
         if self.aux_targets_fn is not None:
             targets = {
                 'mask': lbl,
             }
-            aux_targets = self.aux_targets_fn(idx, rot_idx)
+            aux_targets = self.aux_targets_fn(idx, rot_idx, device=self.device)
             assert type(aux_targets) is dict
             targets.update(aux_targets)
         return img, targets

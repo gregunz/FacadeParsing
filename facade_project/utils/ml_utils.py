@@ -62,7 +62,6 @@ class MetricHandler:
 
         :param outputs: outputs of the model
         :param targets: targets of the model
-        :return:
         """
         raise NotImplementedError()
 
@@ -72,14 +71,14 @@ class MetricHandler:
 
         :param phase: either 'train' or 'val'
         :param dataset_size: size of the dataset
-        :return: bool, whether the aggregated results are the best yet.
         """
         raise NotImplementedError()
 
-    def description(self):
+    def description(self, phase):
         """
         Description of the current metrics
 
+        :param phase: either 'train' or 'val'
         :return: str
         """
         raise NotImplementedError()

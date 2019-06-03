@@ -60,7 +60,7 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 n_channels = target.size(1)
                 output = outputs[:, output_idx:output_idx + n_channels]
                 output_idx += n_channels
-                losses.append(F.mse_loss(output, target))
+                losses.append(F.mse_loss(output, F.relu(target)))
 
         assert output_idx == outputs.size(1), 'we used all the channels available for the loss'
         loss = losses[0]
@@ -69,7 +69,7 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 loss = loss + l
 
         # loss_proportions = [(l / loss).item() for l in losses]
-        # print(losses, loss_proportions)
+        # print(loss_proportions)
         return loss
 
     return facade_criterion_closure
