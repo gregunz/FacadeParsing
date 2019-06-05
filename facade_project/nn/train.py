@@ -77,13 +77,13 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                     loss_scalar = loss.item() * inputs.size(0)
                     running_loss += loss_scalar
 
-                    # metric handler
+                    # metric handler per output
                     if metric_handler:
                         metric_handler.add(outputs, targets)
 
                 epoch_loss = running_loss / len(dataloaders[phase].dataset)
 
-                # metric handler
+                # metric handler per epoch
                 if metric_handler:
                     metric_handler.compute(phase=phase, dataset_size=len(dataloaders[phase]))
 

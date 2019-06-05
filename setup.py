@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 
-setup(name='FacadeParsing',
+setup(name='Facade Project',
       version='1.0',
       description='Facade parsing project',
       author='Grégoire Clément',
