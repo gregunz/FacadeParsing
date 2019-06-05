@@ -27,6 +27,7 @@ def random_rot(angle_limits, itp_name='BI'):
 def random_crop(crop_size):
     """
     return a function which apply random crop to an image and its label
+
     :param crop_size: int or tuple(height, width)
     :return: a function
     """
@@ -56,6 +57,7 @@ def random_crop(crop_size):
 def random_flip(p=0.5):
     """
     return a function which apply random flip to an image and its label given a probability
+
     :param p: probability to flip
     :return: a function
     """
@@ -64,7 +66,7 @@ def random_flip(p=0.5):
 
         if random.random() < p:
             if is_tensor:
-                tf = lambda x: x  # TODO handle tensor flip
+                tf = lambda x: x.flip(2)
             else:
                 tf = TF.hflip
 
@@ -76,7 +78,7 @@ def random_flip(p=0.5):
     return random_flip_closure
 
 
-def random_brightness_and_contrast(contrast_from=0.75, brightness_from=0.85):
+def random_brightness_and_contrast(contrast_from=0.8, brightness_from=0.9):
     """
     return a function which apply random change of brightness to an image
 
@@ -106,6 +108,7 @@ def random_brightness_and_contrast(contrast_from=0.75, brightness_from=0.85):
 def compose(transforms):
     """
     return a function which will apply sequentially the transforms function to an image and its label
+
     :param transforms: list of transform functions
     :return: a function
     """
@@ -120,6 +123,7 @@ def compose(transforms):
 def handle_dict(tf):
     """
     return a transform function which handles dict as inputs by applying it to dict values
+
     :param tf: a function
     :return: the same function handling dict
     """
