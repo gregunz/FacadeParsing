@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
-from facade_project import NUM_IMAGES, NUM_ROTATIONS, FACADE_ROT_IMAGES_TENSORS_DIR
+from facade_project import NUM_IMAGES, NUM_ROTATIONS, FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_TENSORS_DIR
 
 
 def create_img_to_num_rot(num_img, num_rot_per_img):
@@ -21,18 +21,18 @@ class FacadeRandomRotDataset(Dataset):
 
     Items of the dataset are: tuple(image, mask) or tuple(image, dict) if add_aux_channels_fn is used
 
-    A demo can be found in "notebook/nb_datasets.ipynb"
+    A demo can be found in "notebook/nb_demo_datasets.ipynb"
 
     Note that this dataset cannot makes use the CachedDataset directly because it samples images within
     the available rotations. Hence a caching is available directly and implemented here enable
     sampling different rotations
     """
-    def __init__(self, img_dir=FACADE_ROT_IMAGES_TENSORS_DIR, add_aux_channels_fn=None, img_to_num_rot=None,
-                 caching=False,
-                 init_caching=False, device=None):
+
+    def __init__(self, img_dir=FACADE_ROT_IMAGES_TENSORS_DIR, add_targets_fn=None, img_to_num_rot=None,
+                 caching=False, init_caching=False, device=None):
         Dataset.__init__(self)
         self.dir_path = img_dir
-        self.aux_targets_fn = add_aux_channels_fn
+        self.aux_targets_fn = add_targets_fn
         if img_to_num_rot is None:
             img_to_num_rot = create_img_to_num_rot(NUM_IMAGES, NUM_ROTATIONS)
         self.img_to_num_rot = img_to_num_rot
@@ -85,3 +85,13 @@ class FacadeRandomRotDataset(Dataset):
     def get_filename(self, img_idx, rot_idx, is_img):
         name = 'img' if is_img else 'lbl'
         return '{}/{}_{:03d}_{:03d}.torch'.format(self.dir_path, name, img_idx, rot_idx)
+
+
+def add_heatmaps_target(img_idx, rot_idx, device):
+    def get_filename(idx, jdx):
+        return '{}/heatmaps_door-window_{:03d}_{:03d}.torch' \
+            .format(FACADE_ROT_HEATMAPS_TENSORS_DIR, idx, jdx)
+
+    return {
+        'heatmaps': torch.load(get_filename(img_idx, rot_idx), map_location=device)
+    }

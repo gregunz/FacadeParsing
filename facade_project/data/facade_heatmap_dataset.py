@@ -18,7 +18,7 @@ class FacadeHeatmapDataset(Dataset):
 
     Items of the dataset are: tuple(image, heatmaps)
 
-    A demo can be found in "notebook/nb_datasets.ipynb"
+    A demo can be found in "notebook/nb_demo_datasets.ipynb"
     """
 
     def __init__(

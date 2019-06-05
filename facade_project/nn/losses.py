@@ -54,17 +54,19 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
     in comparision to width and height.
     :return: function, the criterion to use for training
     """
+    assert len(predictions_list) > 0
     assert len(predictions_list) == len(predictions_weights)
     def facade_criterion_closure(outputs, targets):
 
         losses = []
         output_idx = 0
+
         for p in predictions_list:
             target = targets[p]
             n_channels = target.size(1)
 
             if p == 'mask':
-                assert n_channels == 1, 'target is a one channel mask'
+                assert n_channels == 1, 'target is a one-channel mask'
                 output = outputs[:, output_idx:output_idx + num_classes]
                 output_idx += num_classes
 

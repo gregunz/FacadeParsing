@@ -9,10 +9,11 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 
 from facade_project import PATH_TO_DATA, LABEL_NAME_TO_VALUE, \
-    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_TENSORS_DIR, FACADE_ROT_MEAN, FACADE_ROT_STD, CROP_SIZE, \
+    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_MEAN, FACADE_ROT_STD, CROP_SIZE, \
     DEFAULT_SEED_SPLIT
 from facade_project.data import FacadeRandomRotDataset, TransformedDataset, split, to_dataloader
 from facade_project.data.augmentation import random_brightness_and_contrast, random_crop, random_flip, compose
+from facade_project.data.facade_random_rot_dataset import add_heatmaps_target
 from facade_project.nn.losses import facade_criterion
 from facade_project.nn.metrics import FacadeMetric
 from facade_project.nn.models import UNet, AlbuNet
@@ -39,12 +40,9 @@ def main(args):
     assert args.batch_val > 0
 
     label_name_to_value = LABEL_NAME_TO_VALUE
-    # if args.labels is not None:
-    #    label_name_to_value = {n:v for n,v in label_name_to_value.items() if v in args.labels}
 
     if args.pred_weights is None:
         args.pred_weights = [1.0 for _ in args.predictions]
-    #assert sum(args.pred_weights) == 1
 
     device = torch.device(args.device)
 
@@ -54,34 +52,18 @@ def main(args):
         pred_weights=args.pred_weights,
     )
     print('Run named {} started...'.format(run_name_str))
-    # make directory for model weights
     weights_dir_path = '{}/{}'.format(args.path_for_weights, run_name_str)
-    os.mkdir(weights_dir_path)
-    summary_dict = vars(args)
-    json.dump(
-        obj=summary_dict,
-        fp=open('{}/summary.json'.format(weights_dir_path), mode='w'),
-        sort_keys=True,
-        indent=4
-    )
 
     with_heatmaps = 'heatmaps' in args.predictions
 
     def create_heatmaps(img_idx, rot_idx, device):
         if not with_heatmaps:
             return dict()
-
-        def get_filename(idx, jdx):
-            return '{}/heatmaps_door-window_{:03d}_{:03d}.torch' \
-                .format(FACADE_ROT_HEATMAPS_TENSORS_DIR, idx, jdx)
-
-        return {
-            'heatmaps': torch.load(get_filename(img_idx, rot_idx), map_location=device)
-        }
+        return add_heatmaps_target(img_idx, rot_idx, device)
 
     facade_dataset = FacadeRandomRotDataset(
         img_dir=FACADE_ROT_IMAGES_TENSORS_DIR,
-        add_aux_channels_fn=create_heatmaps,
+        add_targets_fn=create_heatmaps,
         img_to_num_rot=None,
         caching=False,  # when true it takes quite a lot of RAM
         init_caching=False,
@@ -118,15 +100,15 @@ def main(args):
     if args.model == 'albunet':
         model = AlbuNet(
             num_classes=num_target_channels,
-            num_filters=16,
-            pretrained=False,
+            num_filters=2 ** args.wf,
+            pretrained=args.pretrained,
             is_deconv=True,
         )
     elif args.model == 'unet':
         model = UNet(
             in_channels=3,
             n_classes=num_target_channels,
-            wf=4,
+            wf=args.wf,
             padding=True,
             batch_norm=True,
             up_mode='upconv'
@@ -142,6 +124,17 @@ def main(args):
         use_dice=args.use_dice,
         center_factor=args.center_factor,
     )
+
+    # make directory for model weights
+    os.mkdir(weights_dir_path)
+    summary_dict = vars(args)
+    json.dump(
+        obj=summary_dict,
+        fp=open('{}/summary.json'.format(weights_dir_path), mode='w'),
+        sort_keys=True,
+        indent=4
+    )
+
     with torch.cuda.device(device):
         model = train_model(
             dataloaders=dataloaders,
@@ -168,6 +161,8 @@ if __name__ == '__main__':
     parser.add_argument('--split-seed', action="store", dest="split_seed", type=int, default=DEFAULT_SEED_SPLIT)
     parser.add_argument('--batch-train', action="store", dest="batch_train", type=int, default=1)
     parser.add_argument('--batch-val', action="store", dest="batch_val", type=int, default=1)
+    parser.add_argument('--wf', action='store', dest='wf', type=int, default=5)
+    parser.add_argument('--pretrained', action='store', dest='pretrained', type=bool, default=False)
     parser.add_argument('--predictions', action='store', dest='predictions', nargs='+', type=str,
                         default=['mask', 'heatmaps'])
     parser.add_argument('--pred-weights', action='store', dest='pred_weights', nargs='+', type=float, default=None)
@@ -177,5 +172,6 @@ if __name__ == '__main__':
     parser.add_argument('--use-dice', action='store', dest='use_dice', type=bool, default=True)
     parser.add_argument('--crop-size', action='store', dest='crop_size', type=int, default=CROP_SIZE)
     parser.add_argument('--center-factor', action='store', dest='center_factor', type=float, default=100.0)
+    #  parser.add_argument('--', action='store', dest='', type=int, default=)
 
     main(parser.parse_args())

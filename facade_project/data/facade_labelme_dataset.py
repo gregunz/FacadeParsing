@@ -14,7 +14,7 @@ class FacadeLabelmeDataset(Dataset):
 
     Items of the dataset are: tuple(image, mask)
 
-    A demo can be found in "notebook/nb_datasets.ipynb"
+    A demo can be found in "notebook/nb_demo_datasets.ipynb"
     """
 
     def __init__(self, img_dir, label_name_to_value=LABEL_NAME_TO_VALUE):
