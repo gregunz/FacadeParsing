@@ -5,7 +5,8 @@ import numpy as np
 import torch
 from labelme.utils import img_b64_to_arr
 
-from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES, IS_SIGMA_FIXED, SIGMA_FIXED, SIGMA_SCALE, \
+from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES_HANDLED, IS_SIGMA_FIXED, SIGMA_FIXED, \
+    SIGMA_SCALE, \
     FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH, HEATMAP_LABELS
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 
@@ -68,14 +69,18 @@ def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
 
 def load_img_heatmaps(
         index,
-        img_tensor_paths=IMG_000_PATHS,
-        heatmap_infos=HEATMAPS_000_INFOS,
+        img_tensor_paths=None,
+        heatmap_infos=None,
         labels=HEATMAP_LABELS,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
-        heatmap_types=HEATMAP_TYPES,
+        heatmap_types=HEATMAP_TYPES_HANDLED,
 ):
+    if heatmap_infos is None:
+        heatmap_infos = HEATMAPS_000_INFOS
+    if img_tensor_paths is None:
+        img_tensor_paths = IMG_000_PATHS
     img = torch.load(img_tensor_paths[index])
     heatmaps = build_heatmaps(
         heatmap_info=heatmap_infos[index],

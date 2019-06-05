@@ -1,7 +1,7 @@
 from torch.utils.data import Dataset
 
 from facade_project import LABEL_NAME_TO_VALUE, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, \
-    HEATMAP_TYPES
+    HEATMAP_TYPES_HANDLED
 from facade_project.utils.load import IMG_000_PATHS, HEATMAPS_000_INFOS, load_img_heatmaps
 
 
@@ -18,7 +18,7 @@ class FacadeHeatmapDataset(Dataset):
             is_sigma_fixed=IS_SIGMA_FIXED,
             sigma_fixed=SIGMA_FIXED,
             sigma_scale=SIGMA_SCALE,
-            heatmap_types=HEATMAP_TYPES
+            heatmap_types=HEATMAP_TYPES_HANDLED
     ):
         Dataset.__init__(self)
         if img_tensor_paths is None:

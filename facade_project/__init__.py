@@ -20,17 +20,17 @@ CUT_MARGIN = 100
 # For the construction of the heatmaps
 IS_SIGMA_FIXED = True
 SIGMA_FIXED = 10
-# When not fixed, widths and heights are used but requires scaling
-SIGMA_SCALE = 0.2
+# When not fixed, widths and heights are used as sigmas but they require scaling
+SIGMA_SCALE = 0.1
 
-HEATMAP_LABELS = ['window', 'door']
-HEATMAP_TYPES_HANDLED = ['center', 'width', 'height']
-HEATMAP_TYPES = ['center']  # , 'width', 'height']
-HEATMAP_INCLUDE_MASK = False
+HEATMAP_LABELS = ('window', 'door')
+HEATMAP_TYPES_HANDLED = ('center', 'width', 'height')
 
-DEFAULT_SEED_SPLIT = 238122
 
 # Datasets
+DEFAULT_SEED_SPLIT = 238122
+
+# Datasets directories
 FACADE_IMAGES_DIR = '{}/images'.format(PATH_TO_DATA)
 FACADE_HEATMAPS_DIR = '{}/heatmaps'.format(PATH_TO_DATA)
 
@@ -38,6 +38,6 @@ FACADE_ROT_IMAGES_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_IMAGE
 FACADE_ROT_HEATMAPS_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_HEATMAPS_DIR)
 FACADE_ROT_HEATMAPS_INFOS_PATH = '{}/json/heatmaps_infos_rotated_rescaled.json'.format(FACADE_HEATMAPS_DIR)
 
-FACADE_ROT_PROPORTIONS = [0.3252, 0.5821, 0.0663, 0.0264]
-FACADE_ROT_MEAN = [0.4939, 0.4681, 0.4360]
-FACADE_ROT_STD = [0.2271, 0.2261, 0.2410]
+FACADE_ROT_PROPORTIONS = (0.3252, 0.5821, 0.0663, 0.0264)
+FACADE_ROT_MEAN = (0.4939, 0.4681, 0.4360)
+FACADE_ROT_STD = (0.2271, 0.2261, 0.2410)
