@@ -38,16 +38,18 @@ def dice_loss(logits, true, eps=1e-7):
     return 1 - dice_loss
 
 
-def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True):
+def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True, center_factor=1.0):
+    assert len(predictions_list) == len(predictions_weights)
     def facade_criterion_closure(outputs, targets):
-        assert len(predictions_list) == len(predictions_weights)
 
         losses = []
         output_idx = 0
         for p in predictions_list:
             target = targets[p]
+            n_channels = target.size(1)
 
             if p == 'mask':
+                assert n_channels == 1, 'target is a one channel mask'
                 output = outputs[:, output_idx:output_idx + num_classes]
                 output_idx += num_classes
 
@@ -56,18 +58,18 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 else:
                     losses.append(F.cross_entropy(output, target))
 
-            elif p == 'center' or p == 'width' or p == 'height':
-                n_channels = target.size(1)
-                output = outputs[:, output_idx:output_idx + n_channels]
+            elif p == 'heatmaps':
+                target[:, 0] = target[:, 0] * center_factor
+                output = F.relu(outputs[:, output_idx:output_idx + n_channels])
                 output_idx += n_channels
-                losses.append(F.mse_loss(output, F.relu(target)))
+                losses.append(F.mse_loss(output, target))
 
         assert output_idx == outputs.size(1), 'we used all the channels available for the loss'
 
-        loss = losses[0]
+        loss = losses[0] * predictions_weights[0]
         if len(losses) > 1:
-            for l in losses[1:]:
-                loss = loss + l
+            for l, w in zip(losses[1:], predictions_weights[1:]):
+                loss = loss + l * w
 
         return loss
 

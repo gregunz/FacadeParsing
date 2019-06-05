@@ -6,7 +6,7 @@ import torch
 from labelme.utils import img_b64_to_arr
 
 from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES, IS_SIGMA_FIXED, SIGMA_FIXED, SIGMA_SCALE, \
-    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH
+    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH, HEATMAP_LABELS
 from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
 
 
@@ -70,7 +70,7 @@ def load_img_heatmaps(
         index,
         img_tensor_paths=IMG_000_PATHS,
         heatmap_infos=HEATMAPS_000_INFOS,
-        label_name_to_value=LABEL_NAME_TO_VALUE,
+        labels=HEATMAP_LABELS,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
@@ -79,10 +79,10 @@ def load_img_heatmaps(
     img = torch.load(img_tensor_paths[index])
     heatmaps = build_heatmaps(
         heatmap_info=heatmap_infos[index],
-        label_name_to_value=label_name_to_value,
+        labels=labels,
+        heatmap_types=heatmap_types,
         is_sigma_fixed=is_sigma_fixed,
         sigma_fixed=sigma_fixed,
         sigma_scale=sigma_scale,
-        heatmap_types=heatmap_types,
     )
     return img, heatmaps

@@ -5,11 +5,10 @@ import torch
 from shapely.geometry import Polygon
 
 from facade_project import \
-    LABEL_NAME_TO_VALUE, \
     SIGMA_FIXED, \
     IS_SIGMA_FIXED, \
     SIGMA_SCALE, \
-    HEATMAP_TYPES
+    HEATMAP_TYPES_HANDLED
 from facade_project.geometry.image import rotated_rect_with_max_area
 
 
@@ -93,28 +92,24 @@ def rotate(info, angle):
 
 def build_heatmaps(
         heatmap_info,
-        label_name_to_value=LABEL_NAME_TO_VALUE,
+        labels,
+        heatmap_types,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
-        heatmap_types=HEATMAP_TYPES,
 ):
-    heatmap_types = [type for type in heatmap_types if type in ('center', 'height', 'width')]
-    assert len(heatmap_types) > 0, 'one must build at least one heatmap'
+    heatmap_types_to_idx = {htype: idx for idx, htype in enumerate(HEATMAP_TYPES_HANDLED) if htype in heatmap_types}
+    assert len(heatmap_types_to_idx) > 0, 'one must build at least one heatmap'
 
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
-    n_classes = (len(label_name_to_value) - 1)  # no heatmap for the background class
-    heatmaps = {
-        type: torch.zeros(n_classes, img_height, img_width) for type in heatmap_types
-    }
+    heatmaps = torch.zeros(len(heatmap_types_to_idx), img_height, img_width)
 
     meshgrids = torch.meshgrid(
         [torch.arange(size, dtype=torch.float32) for size in [img_height, img_width]]
     )
 
     for cwh in heatmap_info['cwh_list']:
-        if cwh['label'] in label_name_to_value:
-            heatmap_idx = label_name_to_value[cwh['label']] - 1  # 0 is background, hence a shift of 1
+        if cwh['label'] in labels:
             center = cwh['center'][::-1]  # x and y instead of y and x
             h, w = cwh['height'], cwh['width']
             img_layer = 1
@@ -126,13 +121,13 @@ def build_heatmaps(
                 img_layer *= torch.exp(-((mgrid - mean) / (2 * std)) ** 2) / (std * math.sqrt(2 * math.pi))
             img_layer = img_layer / torch.max(img_layer)
 
-            for name in heatmap_types:
+            for name, heatmap_idx in heatmap_types_to_idx.items():
                 if name == 'center':
-                    heatmaps[name][heatmap_idx] += img_layer
+                    heatmaps[heatmap_idx] += img_layer
                 elif name == 'width':
-                    heatmaps[name][heatmap_idx] += img_layer * w
+                    heatmaps[heatmap_idx] += img_layer * w
                 elif name == 'height':
-                    heatmaps[name][heatmap_idx] += img_layer * h
+                    heatmaps[heatmap_idx] += img_layer * h
                 else:
                     print('WARNING: unexpected heatmap type: {}'.format(name))
 

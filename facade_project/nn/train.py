@@ -9,7 +9,7 @@ from facade_project.utils.ml_utils import Epocher
 
 
 def train_model(dataloaders, path_weights, model_name, model, device, criterion, optimizer, scheduler=None,
-                metric_handler=None, writer=None, num_epoch=25, keep_n_best=3, verbose=True):
+                metric_handler=None, writer=None, num_epoch=25, keep_n_best=5, verbose=True):
     since = time.time()
 
     model = model.to(device)
@@ -40,13 +40,6 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                 # Iterate over data.
                 for data_idx, (inputs, targets) in enumerate(dataloaders[phase]):
                     epocher.print('{}: {}/{} batch'.format(phase, data_idx, len(dataloaders[phase])))
-
-                    # now dataset should already load on GPU
-                    # inputs = inputs.to(device)
-                    # if type(targets) is dict:
-                    #    targets = {k: v.to(device) for k, v in targets.items()}
-                    # else:
-                    #    targets = targets.to(device)
 
                     # zero the parameter gradients
                     optimizer.zero_grad()

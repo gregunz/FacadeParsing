@@ -40,7 +40,6 @@ class FacadeHeatmapDataset(Dataset):
             index=index,
             img_tensor_paths=self.img_tensor_paths,
             heatmap_infos=self.heatmap_infos,
-            label_name_to_value=self.label_name_to_value,
             is_sigma_fixed=self.is_sigma_fixed,
             sigma_fixed=self.sigma_fixed,
             sigma_scale=self.sigma_scale,

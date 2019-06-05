@@ -18,16 +18,19 @@ CUT_STEP = 10
 CUT_MARGIN = 100
 
 # For the construction of the heatmaps
-IS_SIGMA_FIXED = False
-SIGMA_FIXED = 20
+IS_SIGMA_FIXED = True
+SIGMA_FIXED = 10
 # When not fixed, widths and heights are used but requires scaling
 SIGMA_SCALE = 0.2
+
+HEATMAP_LABELS = ['window', 'door']
+HEATMAP_TYPES_HANDLED = ['center', 'width', 'height']
 HEATMAP_TYPES = ['center']  # , 'width', 'height']
 HEATMAP_INCLUDE_MASK = False
 
 DEFAULT_SEED_SPLIT = 238122
 
-# directories for the datasets
+# Datasets
 FACADE_IMAGES_DIR = '{}/images'.format(PATH_TO_DATA)
 FACADE_HEATMAPS_DIR = '{}/heatmaps'.format(PATH_TO_DATA)
 
