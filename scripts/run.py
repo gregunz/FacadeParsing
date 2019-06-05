@@ -136,7 +136,7 @@ def main(args):
     )
 
     with torch.cuda.device(device):
-        model = train_model(
+        train_model(
             dataloaders=dataloaders,
             path_weights=args.path_for_weights,
             model_name=run_name_str,

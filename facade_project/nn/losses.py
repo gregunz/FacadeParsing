@@ -1,6 +1,8 @@
 import torch
 from torch.nn import functional as F
 
+from facade_project import FACADE_ROT_PROPORTIONS
+
 
 def dice_loss(logits, true, eps=1e-7):
     """
@@ -73,7 +75,11 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 if use_dice:
                     losses.append(dice_loss(output, target))
                 else:
-                    losses.append(F.cross_entropy(output, target))
+                    percentages = torch.tensor(FACADE_ROT_PROPORTIONS)
+                    assert num_classes == len(percentages)
+                    inv_perc = 1 / percentages
+                    weights = inv_perc / inv_perc.sum()
+                    losses.append(F.cross_entropy(output, target, weight=weights))
 
             elif p == 'heatmaps':
                 target[:, 0] = target[:, 0] * center_factor
