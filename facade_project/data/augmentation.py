@@ -83,7 +83,7 @@ def random_brightness_and_contrast(contrast_from=0.8, brightness_from=0.9):
     return a function which apply random change of brightness to an image
 
     :param contrast_from: the smaller, the more contrast will be potentially added
-    :param brightness_from: the smaller, the more contrast will be potentially added
+    :param brightness_from: the smaller, the more brightness will be potentially added
     :return: a function
     """
     def random_brightness_and_contrast_closure(img):
