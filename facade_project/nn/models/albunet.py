@@ -3,7 +3,6 @@
 import torch
 import torchvision
 from torch import nn
-from torch.nn import functional as F
 
 
 def conv3x3(in_, out):
@@ -146,9 +145,6 @@ class AlbuNet(nn.Module):
         dec1 = self.dec1(dec2)
         dec0 = self.dec0(dec1)
 
-        if self.num_classes > 1:
-            x_out = F.log_softmax(self.final(dec0), dim=1)
-        else:
-            x_out = self.final(dec0)
+        x_out = self.final(dec0)
 
         return x_out
