@@ -12,6 +12,7 @@ setup(name='FacadeParsing',
       requires=[
           'tqdm',
           'torch',
+          'pycocotools',
           'pillow',
           'numpy',
           'labelme',

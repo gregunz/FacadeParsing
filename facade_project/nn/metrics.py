@@ -4,6 +4,14 @@ from facade_project.utils.ml_utils import MetricHandler
 
 
 def jaccard_index(pred, target, n_classes):
+    """
+    Compute jaccard index (intersection over union) metric
+
+    :param pred: torch.Tensor, prediction mask
+    :param target: torch.Tensor, target mask
+    :param n_classes: int, number of classes
+    :return: torch.Tensor, jaccard index per class
+    """
     ious = []
     pred = pred.view(-1)
     target = target.view(-1)
@@ -24,6 +32,11 @@ def jaccard_index(pred, target, n_classes):
 
 
 class FacadeMetric(MetricHandler):
+    """
+    A Metric Handler for the facade parsing task.
+
+    As of 2019-06-05, it handles jaccard index during traning for better logging
+    """
     def __init__(self, predictions_list, label_name_to_value):
         super().__init__()
         self.predictions_list = predictions_list

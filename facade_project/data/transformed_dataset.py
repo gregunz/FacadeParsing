@@ -2,6 +2,9 @@ from torch.utils.data import Dataset
 
 
 class TransformedDataset(Dataset):
+    """
+    Given a dataset, creates a dataset which applies a transform function to its items
+    """
     def __init__(self, dataset, transform):
         self.dataset = dataset
         self.transform = transform

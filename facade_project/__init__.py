@@ -34,10 +34,14 @@ DEFAULT_SEED_SPLIT = 238122
 FACADE_IMAGES_DIR = '{}/images'.format(PATH_TO_DATA)
 FACADE_HEATMAPS_DIR = '{}/heatmaps'.format(PATH_TO_DATA)
 
+FACADE_LABELME_ORIGINAL_DIR = '{}/labelme/original'.format(FACADE_IMAGES_DIR)
+
 FACADE_ROT_IMAGES_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_IMAGES_DIR)
+
 FACADE_ROT_HEATMAPS_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_HEATMAPS_DIR)
 FACADE_ROT_HEATMAPS_INFOS_PATH = '{}/json/heatmaps_infos_rotated_rescaled.json'.format(FACADE_HEATMAPS_DIR)
 
+# Facade Random Rotations Dataset statistics
 FACADE_ROT_PROPORTIONS = (0.3252, 0.5821, 0.0663, 0.0264)
 FACADE_ROT_MEAN = (0.4939, 0.4681, 0.4360)
 FACADE_ROT_STD = (0.2271, 0.2261, 0.2410)

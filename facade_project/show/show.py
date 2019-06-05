@@ -8,13 +8,20 @@ from facade_project import LABEL_NAME_TO_VALUE
 DEFAULT_FIG_SIZE = (16, 9)
 
 
-def convert_to_numpy(tensor):
+def __convert_to_numpy__(tensor):
     if isinstance(tensor, torch.Tensor):
         tensor = tensor.numpy().transpose((1, 2, 0))
     return tensor
 
 
 def show_img(image, fig_size=DEFAULT_FIG_SIZE):
+    """
+    Plot an image
+
+    :param image: torch.Tensor or numpy.ndarray
+    :param fig_size: tuple(int, int), size of the plot
+    :return: None
+    """
     if isinstance(image, torch.Tensor):
         image = image.clone().permute(1, 2, 0)
     print(image.shape)
@@ -24,13 +31,21 @@ def show_img(image, fig_size=DEFAULT_FIG_SIZE):
 
 
 def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEFAULT_FIG_SIZE):
-    """Show labeled image"""
+    """
+    Plot an image with superposed label
+
+    :param image: torch.Tensor or numpy.ndarray or numpy.ndarray
+    :param label: torch.Tensor or numpy.ndarray
+    :param label_names: list or dict, name of the labels
+    :param fig_size: tuple(int, int), size of the plot
+    :return: None
+    """
     if isinstance(label_names, dict):
         label_names = {v: k for k, v in label_names.items()}
-        label_names = [label_names[i] for i in label_names]
+        label_names = [label_names[i] for i, _ in enumerate(label_names)]
 
-    image = convert_to_numpy(image)
-    label = convert_to_numpy(label)
+    image = __convert_to_numpy__(image)
+    label = __convert_to_numpy__(label)
     img = (image * 255).astype('uint8')
     lbl = label.astype('uint8')
     if len(lbl.shape) == 3:
@@ -39,22 +54,15 @@ def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEF
     show_img(lbl_viz, fig_size)
 
 
-# Helper function to show a batch
-def show_batch(images_batch, labels_batch, label_names, nrow=2, fig_size=DEFAULT_FIG_SIZE):
-    """Show labeled image for a batch of samples."""
-    img_grid = utils.make_grid(images_batch, nrow=nrow)
-    img_grid = img_grid.numpy().transpose((1, 2, 0))
-
-    lbl_grid = utils.make_grid(labels_batch, nrow=nrow)
-    lbl_grid = lbl_grid.numpy()[0]
-
-    # lbl_names = sorted(list({l for group in sample_batched['label_names'] for l in group}))
-
-    show_labeled_img(img_grid, lbl_grid, label_names, fig_size=fig_size)
-    plt.title('Batch from dataloader')
-
-
 def show_channels(img, nrow=3, fig_size=DEFAULT_FIG_SIZE):
+    """
+    Plot the channel of an image next to each others.
+
+    :param img: torch.Tensor
+    :param nrow: number of image per row
+    :param fig_size: tuple(int, int), size of the plot
+    :return: None
+    """
     channels = [img[i].unsqueeze(0) / img[i].max() for i in range(img.size(0))]
     img_grid = utils.make_grid(channels, nrow=nrow)
     show_img(img_grid, fig_size)

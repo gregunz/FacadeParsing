@@ -8,7 +8,18 @@ from tqdm.auto import tqdm
 
 
 class Labelme2coco(object):
+    """
+    This class turns a list of labelme style json files into a single coco style json file
+
+    A full demo on how to use this can be found in the "notebook/nb_labelme_to_coco.ipynb" notebook
+    """
     def __init__(self, labelme_json=None, save_json_path='./new.json', only_labels=None, save_img_dir=None):
+        """
+        :param labelme_json: list of labelme style json files (paths)
+        :param save_json_path:  path of the coco style generated json file
+        :param only_labels: which labels to extract from the labelme data (None = all)
+        :param save_img_dir: directory to save the images extracted from the labelme data (None = dont' save)
+        """
         if labelme_json is None:
             labelme_json = []
         self.labelme_json = labelme_json

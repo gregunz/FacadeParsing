@@ -1,3 +1,5 @@
+# From (2019.04.20) (MIT License) https://github.com/jvanvugt/pytorch-unet
+
 import torch
 import torch.nn.functional as F
 from torch import nn

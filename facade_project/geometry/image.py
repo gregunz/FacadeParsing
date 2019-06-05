@@ -6,7 +6,6 @@ import torchvision.transforms.functional as TF
 from torch import Tensor
 
 from facade_project import IMG_MAX_SIZE
-from facade_project.utils.misc import tf_if
 
 
 def rotated_rect_with_max_area(w, h, angle):
@@ -14,6 +13,11 @@ def rotated_rect_with_max_area(w, h, angle):
     Given a rectangle of size wxh that has been rotated by 'angle' (in
     radians), computes the width and height of the largest possible
     axis-aligned rectangle (maximal area) within the rotated rectangle.
+
+    :param w: int, width
+    :param h: int, height
+    :param angle: float, angle in radians
+    :return: tuple(int, int), width and height
     """
     if w <= 0 or h <= 0:
         return 0, 0
@@ -38,6 +42,17 @@ def rotated_rect_with_max_area(w, h, angle):
 
 
 def rescale(inputs, max_size=IMG_MAX_SIZE, itp_name='BI'):
+    """
+    Rescale an image given a maximum size.
+
+    Biggest side (width or height) will be rescaled to maximum size, and the smallest
+    will be rescaled proportionally
+
+    :param inputs: PIL or Tensor, image
+    :param max_size: int
+    :param itp_name: interpolation used ('BI' for bilinear and 'NN' for nearest neighbor)
+    :return: PIL or Tensor, rescaled image
+    """
     is_tensor = type(inputs) is torch.Tensor
     if is_tensor:
         h, w = inputs.shape[1:]
@@ -51,13 +66,21 @@ def rescale(inputs, max_size=IMG_MAX_SIZE, itp_name='BI'):
         return inputs
 
     return T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.Resize((round(h * ratio), round(w * ratio)), interpolation=get_interpolation(itp_name)),
-        tf_if(T.ToTensor(), is_tensor),
+        __tf_if__(T.ToPILImage(), is_tensor),
+        T.Resize((round(h * ratio), round(w * ratio)), interpolation=__get_interpolation__(itp_name)),
+        __tf_if__(T.ToTensor(), is_tensor),
     ])(inputs)
 
 
 def resize(inputs, size, itp_name='BI'):
+    """
+    Resize  an image given a target size
+
+    :param inputs: PIL or Tensor, image
+    :param size: tuple(int, int)
+    :param itp_name: interpolation used ('BI' for bilinear and 'NN' for nearest neighbor)
+    :return: PIL or Tensor, resized image
+    """
     is_tensor = type(inputs) is torch.Tensor
     if is_tensor:
         h, w = inputs.shape[1:]
@@ -69,27 +92,39 @@ def resize(inputs, size, itp_name='BI'):
         return inputs
 
     return T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.Resize(size, interpolation=get_interpolation(itp_name)),
-        tf_if(T.ToTensor(), is_tensor),
+        __tf_if__(T.ToPILImage(), is_tensor),
+        T.Resize(size, interpolation=__get_interpolation__(itp_name)),
+        __tf_if__(T.ToTensor(), is_tensor),
     ])(inputs)
 
 
 def rotate(img, angle, itp_name='BI'):
+    """
+    Rotate an image given an angle in degrees
+
+    :param img: PIL or Tensor, image
+    :param angle: int, angle of the rotation in degrees
+    :param itp_name: interpolation used ('BI' for bilinear and 'NN' for nearest neighbor)
+    :return: PIL or Tensor, rotated image
+    """
     is_tensor = type(img) is Tensor
     img_to_new_dim = lambda img: rotated_rect_with_max_area(*img.size, angle * math.pi / 180)[::-1]
     return T.Compose([
-        tf_if(T.ToPILImage(), is_tensor),
-        T.Lambda(lambda img: TF.rotate(img, angle, resample=get_interpolation(itp_name), expand=False)),
+        __tf_if__(T.ToPILImage(), is_tensor),
+        T.Lambda(lambda img: TF.rotate(img, angle, resample=__get_interpolation__(itp_name), expand=False)),
         T.Lambda(lambda img: T.CenterCrop(img_to_new_dim(img))(img)),
-        tf_if(T.ToTensor(), is_tensor),
+        __tf_if__(T.ToTensor(), is_tensor),
     ])(img)
 
 
-def get_interpolation(name):
+def __get_interpolation__(name):
     if name == 'BI':
         return PIL.Image.BILINEAR
     elif name == 'NN':
         return PIL.Image.NEAREST
     else:
         assert False, 'interpolation not handled'
+
+
+def __tf_if__(tf, do_tf=False):
+    return T.Lambda(lambda img: tf(img) if do_tf else img)

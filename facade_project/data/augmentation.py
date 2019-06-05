@@ -2,18 +2,19 @@ import random
 
 import PIL
 import torch
-import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 from torch import Tensor
 
 from facade_project.geometry.image import rotate
 
 
-def tuple_to_pil(img, lbl):
-    return T.ToPILImage()(img), T.ToPILImage()(lbl)
-
-
 def random_rot(angle_limits, itp_name='BI'):
+    """
+    return function which apply random rotation within angle limits (in degrees) to an image and its label
+    :param angle_limits: tuple(from, to) (integer only)
+    :param itp_name: interpolation used ('BI' for bilinear and 'NN' for nearest neighbor)
+    :return: a function
+    """
     def random_rot_closure(img, lbl):
         angle = random.randint(*angle_limits)
         tf = lambda inputs: rotate(inputs, angle, itp_name=itp_name)
@@ -24,6 +25,11 @@ def random_rot(angle_limits, itp_name='BI'):
 
 
 def random_crop(crop_size):
+    """
+    return a function which apply random crop to an image and its label
+    :param crop_size: int or tuple(height, width)
+    :return: a function
+    """
     def tf(inputs):
         assert type(inputs) is torch.Tensor
 
@@ -48,6 +54,11 @@ def random_crop(crop_size):
 
 
 def random_flip(p=0.5):
+    """
+    return a function which apply random flip to an image and its label given a probability
+    :param p: probability to flip
+    :return: a function
+    """
     def random_flip_closure(img, lbl):
         is_tensor = type(img) is Tensor
 
@@ -66,12 +77,18 @@ def random_flip(p=0.5):
 
 
 def random_brightness_and_contrast(contrast_from=0.75, brightness_from=0.85):
+    """
+    return a function which apply random change of brightness to an image
+
+    :param contrast_from: the smaller, the more contrast will be potentially added
+    :param brightness_from: the smaller, the more contrast will be potentially added
+    :return: a function
+    """
     def random_brightness_and_contrast_closure(img):
         is_tensor = type(img) is Tensor
         contr_factor = contrast_from + random.random() * (2 - contrast_from * 2)
         bright_factor = brightness_from + random.random() * (2 - brightness_from * 2)
 
-        # TODO inconsistencies: changes on tensor are not exactly the same as the one with PIL (scaling of factors)
         if is_tensor:
             # apply contrast
             img = contr_factor * (img - 0.5) + 0.5
@@ -87,6 +104,11 @@ def random_brightness_and_contrast(contrast_from=0.75, brightness_from=0.85):
 
 
 def compose(transforms):
+    """
+    return a function which will apply sequentially the transforms function to an image and its label
+    :param transforms: list of transform functions
+    :return: a function
+    """
     def sequential_apply(img, lbl):
         for tf in transforms:
             img, lbl = tf(img, lbl)
@@ -96,6 +118,11 @@ def compose(transforms):
 
 
 def handle_dict(tf):
+    """
+    return a transform function which handles dict as inputs by applying it to dict values
+    :param tf: a function
+    :return: the same function handling dict
+    """
     def tf_handling_dict(inputs):
         if type(inputs) is dict:
             return {k: tf(v) for k, v in inputs.items()}

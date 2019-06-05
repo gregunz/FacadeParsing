@@ -7,7 +7,15 @@ from facade_project.utils.load import load_tuple_from_json
 
 
 class FacadeLabelmeDataset(Dataset):
-    """Buildings dataset."""
+    """
+    Facade Labelme Dataset
+
+    A dataset which loads labelme style json files within a directory.
+
+    Items of the dataset are: tuple(image, mask)
+
+    A demo can be found in "notebook/nb_datasets.ipynb"
+    """
 
     def __init__(self, img_dir, label_name_to_value=LABEL_NAME_TO_VALUE):
         Dataset.__init__(self)

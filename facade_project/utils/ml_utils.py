@@ -1,18 +1,14 @@
-from tqdm import tqdm
-
-
-def tqdm_if(it, enable=True, **kwargs):
-    if enable:
-        return tqdm(it, **kwargs)
-    return it
-
-
 class Epocher:
+    """
+    An object which is used to print information about training without spamming the console (WIP)
+    """
     def __init__(self, n_epoch, epoch_offset=1):
         # epoch_offset += 1 # starting at 1 and not zero
         self.n_epoch = n_epoch
         self.epoch_offset = epoch_offset
         self.s_more = ''
+        self.stats_string = ''
+        self.ls_string = ''
 
     def __iter__(self):
         self.n = self.epoch_offset - 1
@@ -34,7 +30,7 @@ class Epocher:
         self.stats_string = s
         self.__update_stdout__()
 
-    def update_ls(self, s):
+    def update_last_saved(self, s):
         self.ls_string = s
         self.__update_stdout__()
 

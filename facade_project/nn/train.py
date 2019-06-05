@@ -10,6 +10,24 @@ from facade_project.utils.ml_utils import Epocher
 
 def train_model(dataloaders, path_weights, model_name, model, device, criterion, optimizer, scheduler=None,
                 metric_handler=None, writer=None, num_epoch=25, keep_n_best=5, verbose=True):
+    """
+    A fully customizable training loop
+
+    :param dataloaders: dict, one dataloader for each phase ('train' and 'val')
+    :param path_weights: str, path to a directory to store weights of the model
+    :param model_name: str, name of the model
+    :param model: torch.nn.Module, the model to train
+    :param device: torch.device, the device on which to train the model
+    :param criterion: function, the criterion to minimize
+    :param optimizer: torch.optim, the optimizer used
+    :param scheduler: optional, a scheduler
+    :param metric_handler: optional, a metric handler
+    :param writer: optional, a tensorboard summary writer
+    :param num_epoch: int, number of epochs to train
+    :param keep_n_best: int, number of the past best weights to store
+    :param verbose: bool, whether it prints information during training
+    :return: torch.nn.Module, model trained with best validation loss or highest validation metric
+    """
     since = time.time()
 
     model = model.to(device)
@@ -96,7 +114,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                     torch.save(model.state_dict(), model_path)
                     # if verbose:
                     #    ls_string = model_path
-                    #    epocher.update_ls(ls_string)
+                    #    epocher.update_last_saved(ls_string)
                     best_model_wts = copy.deepcopy(model.state_dict())
 
             if hasattr(model, 'epoch_trained'):

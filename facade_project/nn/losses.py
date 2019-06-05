@@ -3,7 +3,8 @@ from torch.nn import functional as F
 
 
 def dice_loss(logits, true, eps=1e-7):
-    """Computes the Sørensen–Dice loss.
+    """
+    Computes the Sørensen–Dice loss.
     Note that PyTorch optimizers minimize a loss. In this
     case, we would like to maximize the dice loss so we
     return the negated dice loss.
@@ -14,8 +15,9 @@ def dice_loss(logits, true, eps=1e-7):
         eps: added to the denominator for numerical stability.
     Returns:
         dice_loss: the Sørensen–Dice loss.
+
+    credits to : https://github.com/kevinzakka/pytorch-goodies/blob/master/losses.py
     """
-    # assert logits.shape == true.shape
     num_classes = logits.shape[1]
     if num_classes == 1:
         true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
@@ -38,7 +40,20 @@ def dice_loss(logits, true, eps=1e-7):
     return 1 - dice_loss
 
 
-def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True, center_factor=1.0):
+def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True, center_factor=100.):
+    """
+    Criterion for facade parsing.
+
+    Handle 'mask' segmentation and 'heatmaps' regression
+
+    :param predictions_list: list(str), which predictions to minimize (mask and/or heatmaps)
+    :param predictions_weights: list(float), weights associated with the loss of single predictions
+    :param num_classes: int, number of classes of the mask
+    :param use_dice: bool, whether to use dice loss or cross entropy loss
+    :param center_factor: float, a factor multiplied to the center heatmap target which would otherwise be too small
+    in comparision to width and height.
+    :return: function, the criterion to use for training
+    """
     assert len(predictions_list) == len(predictions_weights)
     def facade_criterion_closure(outputs, targets):
 

@@ -13,9 +13,20 @@ def create_img_to_num_rot(num_img, num_rot_per_img):
 
 
 class FacadeRandomRotDataset(Dataset):
-    # Note that this dataset cannot makes use the CachedDataset directly because it samples images within
-    # the available rotations. Hence a caching is available directly and implemented here enable
-    # sampling different rotations
+    """
+    Facade Random Rotations
+
+    A dataset which return rotated version of an image randomly,
+    useful to build batches for data augmentation
+
+    Items of the dataset are: tuple(image, mask) or tuple(image, dict) if add_aux_channels_fn is used
+
+    A demo can be found in "notebook/nb_datasets.ipynb"
+
+    Note that this dataset cannot makes use the CachedDataset directly because it samples images within
+    the available rotations. Hence a caching is available directly and implemented here enable
+    sampling different rotations
+    """
     def __init__(self, img_dir=FACADE_ROT_IMAGES_TENSORS_DIR, add_aux_channels_fn=None, img_to_num_rot=None,
                  caching=False,
                  init_caching=False, device=None):

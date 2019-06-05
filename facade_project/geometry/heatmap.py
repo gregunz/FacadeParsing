@@ -2,17 +2,24 @@ import copy
 
 import math
 import torch
+from labelme.utils import img_b64_to_arr
 from shapely.geometry import Polygon
 
 from facade_project import \
     SIGMA_FIXED, \
     IS_SIGMA_FIXED, \
     SIGMA_SCALE, \
-    HEATMAP_TYPES_HANDLED
+    HEATMAP_TYPES_HANDLED, LABEL_NAME_TO_VALUE
 from facade_project.geometry.image import rotated_rect_with_max_area
 
 
 def points_to_cwh(points):
+    """
+    Given list of points (coordinates) representing a polygon, compute the envelope of it and
+    return its center coordinates, width and height
+    :param points: list(tuple(int, int))
+    :return: tuple(center_x, center_y, width, height)
+    """
     poly = Polygon(points)
     ctr = poly.centroid
     x, y = poly.envelope.exterior.coords.xy
@@ -23,6 +30,13 @@ def points_to_cwh(points):
 
 
 def crop(info, bbox):
+    """
+    Crop a heatmap given its info and a cropping area
+
+    :param info: dict, heatmaps info
+    :param bbox: tuple(int, int, int, int), bounding box (top left x, top left y, bottom right x, bottom right, y) of the cropping area
+    :return: dict, heatmaps info (copy)
+    """
     info = copy.deepcopy(info)
     tl_x, tl_y, br_x, br_y = bbox
 
@@ -35,11 +49,28 @@ def crop(info, bbox):
 
 
 def rescale(info, max_size):
+    """
+    Rescale a heatmap given its info and a maximum size.
+    Biggest side (width or height) will be rescaled to maximum size, and the smallest
+    will be rescaled proportionally
+
+    :param info: dict, heatmaps info
+    :param max_size: int
+    :return: dict, heatmaps info rescaled (copy)
+    """
     ratio = max_size / max(info['img_width'], info['img_height'])
     return rescale_with_ratios(info, ratio, ratio)
 
 
 def rescale_with_ratios(info, width_ratio, height_ratio):
+    """
+    Rescale heatmaps sides given its info and ratios.
+
+    :param info: dict, heatmaps info
+    :param width_ratio: float, ratio by which width will be multiplied
+    :param height_ratio: float, ratio by which height will be multiplied
+    :return: dict, heatmaps info rescaled (copy)
+    """
     info = copy.deepcopy(info)
 
     if width_ratio == 1 and height_ratio == 1:
@@ -55,6 +86,13 @@ def rescale_with_ratios(info, width_ratio, height_ratio):
 
 
 def resize(info, size):
+    """
+    Resize heatmaps given its info and a target size
+
+    :param info: dict, heatmaps info
+    :param size: int or tuple(int, int)
+    :return: dict, heatmaps infos resized (copy)
+    """
     if type(size) is int:
         size = (size, size)
     height_ratio = size[0] / info['img_height']
@@ -63,6 +101,13 @@ def resize(info, size):
 
 
 def rotate(info, angle):
+    """
+    Rotated heatmaps given its info and an angle
+
+    :param info: dict, heatmaps info
+    :param angle: int, angle in degrees
+    :return: dict, heatmaps infos rotated (copy)
+    """
     info = copy.deepcopy(info)
     if angle == 0:
         return info
@@ -98,6 +143,18 @@ def build_heatmaps(
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
 ):
+    """
+    Build a tensor of the heatmaps given its info
+
+    :param heatmap_info: dict
+    :param labels: list(str), which labels to put on the heatmaps (e.g. door and window)
+    :param heatmap_types: list(str), which heatmap to build (center, width, height)
+    :param is_sigma_fixed: bool, whether the sigma of the gaussian is fixed for all points
+    :param sigma_fixed: float, value of the fixed sigma
+    :param sigma_scale: float, if sigma is not fixed, width and height (for x and y) will
+     be used and rescaled by this value
+    :return: torch.Tensor
+    """
     heatmap_types_to_idx = {htype: idx for idx, htype in enumerate(HEATMAP_TYPES_HANDLED) if htype in heatmap_types}
     assert len(heatmap_types_to_idx) > 0, 'one must build at least one heatmap'
 
@@ -132,3 +189,32 @@ def build_heatmaps(
                     print('WARNING: unexpected heatmap type: {}'.format(name))
 
     return heatmaps
+
+
+def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
+    """
+    Given labelme json data, construct a heatmaps info
+
+    :param json_data: dict, labelme data from a json file
+    :param label_name_to_value: dict
+    :return: dict, heatmaps info
+    """
+    img = img_b64_to_arr(json_data['imageData'])
+    info = {
+        'img_height': img.shape[0],
+        'img_width': img.shape[1],
+        'cwh_list': [],
+    }
+    for shape in json_data['shapes']:
+        lbl = shape['label']
+        if lbl in label_name_to_value:
+            points = shape['points']
+            if len(points) > 3:
+                c_x, c_y, w, h = points_to_cwh(points)
+                info['cwh_list'].append({
+                    'label': lbl,
+                    'center': (c_x, c_y),
+                    'width': w,
+                    'height': h,
+                })
+    return info

@@ -1,13 +1,24 @@
+import json
+
+import torch
 from torch.utils.data import Dataset
 
 from facade_project import LABEL_NAME_TO_VALUE, SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, \
-    HEATMAP_TYPES_HANDLED
-from facade_project.utils.load import IMG_000_PATHS, HEATMAPS_000_INFOS, load_img_heatmaps
+    HEATMAP_TYPES_HANDLED, HEATMAP_LABELS, FACADE_ROT_HEATMAPS_INFOS_PATH, FACADE_ROT_IMAGES_TENSORS_DIR, NUM_IMAGES
+from facade_project.geometry.heatmap import build_heatmaps
 
 
 class FacadeHeatmapDataset(Dataset):
     """
     Facade Heatmap Dataset
+
+    A dataset of images and heatmaps representing where windows and door are located
+    Heatmaps are divided into 3 sub-heatmaps (channels),
+    one for the locations, one for the width, and one for the height
+
+    Items of the dataset are: tuple(image, heatmaps)
+
+    A demo can be found in "notebook/nb_datasets.ipynb"
     """
 
     def __init__(
@@ -18,7 +29,8 @@ class FacadeHeatmapDataset(Dataset):
             is_sigma_fixed=IS_SIGMA_FIXED,
             sigma_fixed=SIGMA_FIXED,
             sigma_scale=SIGMA_SCALE,
-            heatmap_types=HEATMAP_TYPES_HANDLED
+            heatmap_types=HEATMAP_TYPES_HANDLED,
+            heatmap_labels=HEATMAP_LABELS,
     ):
         Dataset.__init__(self)
         if img_tensor_paths is None:
@@ -34,17 +46,34 @@ class FacadeHeatmapDataset(Dataset):
         self.sigma_fixed = sigma_fixed
         self.sigma_scale = sigma_scale
         self.heatmap_types = heatmap_types
+        self.heatmap_labels = heatmap_labels
 
     def __getitem__(self, index):
-        return load_img_heatmaps(
-            index=index,
-            img_tensor_paths=self.img_tensor_paths,
-            heatmap_infos=self.heatmap_infos,
+        img = torch.load(self.img_tensor_paths[index])
+        heatmaps = build_heatmaps(
+            heatmap_info=self.heatmap_infos[index],
+            labels=self.heatmap_labels,
+            heatmap_types=self.heatmap_types,
             is_sigma_fixed=self.is_sigma_fixed,
             sigma_fixed=self.sigma_fixed,
             sigma_scale=self.sigma_scale,
-            heatmap_types=self.heatmap_types,
         )
+        return img, heatmaps
 
     def __len__(self):
         return len(self.img_tensor_paths)
+
+
+def __load_infos_per_rot__(path):
+    all_infos = json.load(open(path, mode='r'))
+    return {
+        int(k): {
+            int(k2): v2 for k2, v2 in info_for_each_rot.items()
+        } for k, info_for_each_rot in all_infos.items()
+    }
+
+
+HEATMAP_INFOS_PER_ROT = __load_infos_per_rot__(path=FACADE_ROT_HEATMAPS_INFOS_PATH)
+# 000.torch because we only take the non rotated ones for this dataset
+IMG_000_PATHS = ['{}/img_{:03d}_000.torch'.format(FACADE_ROT_IMAGES_TENSORS_DIR, i) for i in range(NUM_IMAGES)]
+HEATMAPS_000_INFOS = [HEATMAP_INFOS_PER_ROT[i][0] for i in range(len(IMG_000_PATHS))]

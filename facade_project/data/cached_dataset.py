@@ -3,6 +3,9 @@ from tqdm.auto import tqdm
 
 
 class CachedDataset(Dataset):
+    """
+    Given a dataset, creates the same dataset which caches its items
+    """
     def __init__(self, dataset, init_caching=False):
         self.dataset = dataset
         self.cache = dict()

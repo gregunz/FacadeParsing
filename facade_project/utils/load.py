@@ -2,32 +2,19 @@ import json
 
 import labelme
 import numpy as np
-import torch
-from labelme.utils import img_b64_to_arr
 
-from facade_project import LABEL_NAME_TO_VALUE, NUM_IMAGES, HEATMAP_TYPES_HANDLED, IS_SIGMA_FIXED, SIGMA_FIXED, \
-    SIGMA_SCALE, \
-    FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_INFOS_PATH, HEATMAP_LABELS
-from facade_project.geometry.heatmap import points_to_cwh, build_heatmaps
-
-
-def load_infos_per_rot(path):
-    all_infos = json.load(open(path, mode='r'))
-    return {
-        int(k): {
-            int(k2): v2 for k2, v2 in info_for_each_rot.items()
-        } for k, info_for_each_rot in all_infos.items()
-    }
-
-
-HEATMAP_INFOS_PER_ROT = load_infos_per_rot(path=FACADE_ROT_HEATMAPS_INFOS_PATH)
-
-# 000.torch because they are not rotated but only resized
-IMG_000_PATHS = ['{}/img_{:03d}_000.torch'.format(FACADE_ROT_IMAGES_TENSORS_DIR, i) for i in range(NUM_IMAGES)]
-HEATMAPS_000_INFOS = [HEATMAP_INFOS_PER_ROT[i][0] for i in range(len(IMG_000_PATHS))]
+from facade_project import LABEL_NAME_TO_VALUE
+from facade_project.geometry.heatmap import extract_heatmaps_info
 
 
 def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
+    """
+    Load image and its associated mask from a labelme style json file
+
+    :param img_path: str, path to the json file
+    :param label_name_to_value: dict, which labels to extract and its value on the mask
+    :return: tuple(numpy.ndarray, numpy.ndarray)
+    """
     data = json.load(open(img_path))
 
     image_data = data['imageData']
@@ -42,52 +29,11 @@ def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
 
 
 def load_heatmaps_info(labelme_json_path):
+    """
+    Load heatmaps infos given labelme style json file
+
+    :param labelme_json_path: str, path to the json file
+    :return: dict, heatmaps info
+    """
     json_data = json.load(open(labelme_json_path, mode='r'))
     return extract_heatmaps_info(json_data)
-
-
-def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
-    img = img_b64_to_arr(json_data['imageData'])
-    info = {
-        'img_height': img.shape[0],
-        'img_width': img.shape[1],
-        'cwh_list': [],
-    }
-    for shape in json_data['shapes']:
-        lbl = shape['label']
-        if lbl in label_name_to_value:
-            points = shape['points']
-            if len(points) > 3:
-                c_x, c_y, w, h = points_to_cwh(points)
-                info['cwh_list'].append({
-                    'label': lbl,
-                    'center': (c_x, c_y),
-                    'width': w,
-                    'height': h,
-                })
-    return info
-
-def load_img_heatmaps(
-        index,
-        img_tensor_paths=None,
-        heatmap_infos=None,
-        labels=HEATMAP_LABELS,
-        is_sigma_fixed=IS_SIGMA_FIXED,
-        sigma_fixed=SIGMA_FIXED,
-        sigma_scale=SIGMA_SCALE,
-        heatmap_types=HEATMAP_TYPES_HANDLED,
-):
-    if heatmap_infos is None:
-        heatmap_infos = HEATMAPS_000_INFOS
-    if img_tensor_paths is None:
-        img_tensor_paths = IMG_000_PATHS
-    img = torch.load(img_tensor_paths[index])
-    heatmaps = build_heatmaps(
-        heatmap_info=heatmap_infos[index],
-        labels=labels,
-        heatmap_types=heatmap_types,
-        is_sigma_fixed=is_sigma_fixed,
-        sigma_fixed=sigma_fixed,
-        sigma_scale=sigma_scale,
-    )
-    return img, heatmaps
