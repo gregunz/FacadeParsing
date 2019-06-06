@@ -31,24 +31,25 @@ def random_crop(crop_size):
     :param crop_size: int or tuple(height, width)
     :return: a function
     """
-    def tf(inputs):
-        assert type(inputs) is torch.Tensor
+
+    def random_crop_closure(img, lbl):
+        assert type(img) is torch.Tensor
 
         if type(crop_size) is int:
             crop_x, crop_y = crop_size, crop_size
         else:
             crop_x, crop_y = crop_size
 
-        h, w = inputs.shape[1:]
+        h, w = img.shape[1:]
         top = random.randint(0, h - crop_y)
         left = random.randint(0, w - crop_x)
-        inputs = inputs[:, top:top + crop_y, left:left + crop_x]
 
-        return inputs
+        def tf(inputs):
+            inputs = inputs[:, top:top + crop_y, left:left + crop_x]
 
-    tf = handle_dict(tf)
+            return inputs
 
-    def random_crop_closure(img, lbl):
+        tf = handle_dict(tf)
         return tf(img), tf(lbl)
 
     return random_crop_closure
