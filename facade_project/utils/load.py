@@ -21,6 +21,7 @@ def load_tuple_from_json(img_path, label_name_to_value=LABEL_NAME_TO_VALUE):
     img = labelme.utils.img_b64_to_arr(image_data)
 
     data['shapes'] = [shape for shape in data['shapes'] if shape['label'] in label_name_to_value]
+    data['shapes'] = sorted(data['shapes'], key=lambda shape: label_name_to_value[shape['label']])
 
     lbl = labelme.utils.shapes_to_label(img.shape, data['shapes'], label_name_to_value)
     lbl = lbl.astype('uint8')[:, :, np.newaxis]

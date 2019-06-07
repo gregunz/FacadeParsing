@@ -58,7 +58,6 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
                 # Iterate over data.
                 for data_idx, (inputs, targets) in enumerate(dataloaders[phase]):
                     epocher.print('{}: {}/{} batch'.format(phase, data_idx, len(dataloaders[phase])))
-
                     # zero the parameter gradients
                     optimizer.zero_grad()
 

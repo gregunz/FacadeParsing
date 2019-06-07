@@ -66,11 +66,17 @@ class FacadeHeatmapDataset(Dataset):
 
 def __load_infos_per_rot__(path):
     all_infos = json.load(open(path, mode='r'))
-    return {
+    heatmaps_infos = {
         int(k): {
             int(k2): v2 for k2, v2 in info_for_each_rot.items()
         } for k, info_for_each_rot in all_infos.items()
     }
+    for infos_per_rot in heatmaps_infos.values():
+        for info in infos_per_rot.values():
+            info['cwh_list'] = [cwh for cwh in info['cwh_list'] \
+                                if 0 <= cwh['center'][0] <= info['img_width'] and 0 <= cwh['center'][1] <= info[
+                                    'img_height']]
+    return heatmaps_infos
 
 
 HEATMAP_INFOS_PER_ROT = __load_infos_per_rot__(path=FACADE_ROT_HEATMAPS_INFOS_PATH)

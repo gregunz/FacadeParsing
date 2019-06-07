@@ -3,13 +3,11 @@ import copy
 import math
 import torch
 from labelme.utils import img_b64_to_arr
+from scipy import ndimage
 from shapely.geometry import Polygon
 
-from facade_project import \
-    SIGMA_FIXED, \
-    IS_SIGMA_FIXED, \
-    SIGMA_SCALE, \
-    HEATMAP_TYPES_HANDLED, LABEL_NAME_TO_VALUE
+from facade_project import SIGMA_FIXED, IS_SIGMA_FIXED, SIGMA_SCALE, HEATMAP_TYPES_HANDLED, LABEL_NAME_TO_VALUE, \
+    HEATMAP_LABELS
 from facade_project.geometry.image import rotated_rect_with_max_area
 
 
@@ -29,6 +27,22 @@ def points_to_cwh(points):
     return round(ctr.x), round(ctr.y), round(width), round(height)
 
 
+def flip(info):
+    """
+    Flip horizontally a heatmap info
+
+    :param info: dict, heatmaps info
+    :return: dict, heatmaps info (copy)
+    """
+    info = copy.deepcopy(info)
+
+    for cwh in info['cwh_list']:
+        c_x, c_y = cwh['center']
+        cwh['center'] = (info['img_width'] - c_x, c_y)
+
+    return info
+
+
 def crop(info, bbox):
     """
     Crop a heatmap given its info and a cropping area
@@ -45,6 +59,10 @@ def crop(info, bbox):
     for cwh in info['cwh_list']:
         c_x, c_y = cwh['center']
         cwh['center'] = (c_x - tl_x, c_y - tl_y)
+
+    info['cwh_list'] = [cwh for cwh in info['cwh_list'] \
+                        if 0 <= cwh['center'][0] <= info['img_width'] and 0 <= cwh['center'][1] <= info['img_height']]
+
     return info
 
 
@@ -218,3 +236,101 @@ def extract_heatmaps_info(json_data, label_name_to_value=LABEL_NAME_TO_VALUE):
                     'height': h,
                 })
     return info
+
+
+def heatmaps_to_info(heatmaps, logits, center_threshold, surface_threshold, label_to_name_value=LABEL_NAME_TO_VALUE,
+                     heatmap_labels=HEATMAP_LABELS):
+    """
+    Extracting back infos from heatmaps (center, width, height)
+
+    :param heatmaps: torch.Tensor, 3 x H x W tensor (3 because of center, width, height)
+    :param logits: torch.Tensor, logits output from the model to define the true label
+    :param center_threshold: float, the threshold used to extract heatmaps centers
+    :param surface_threshold: float, the minimum surface area of an extracted object
+    :param label_to_name_value: dict, label name mapped to its value
+    :param heatmap_labels: tuple, label to extract
+    :return: dict, heatmaps info
+    """
+    heatmap_center = heatmaps[0].numpy()
+    img_height, img_width = heatmap_center.shape
+    mask, nb = ndimage.label(heatmap_center > center_threshold)
+
+    cwh_list = []
+    for label in range(nb):
+        centers = ndimage.measurements.center_of_mass((mask == label).astype(float) * heatmap_center)
+        c_y, c_x = tuple(int(round(c)) for c in centers)
+
+        w = heatmaps[1].numpy()[mask == label].max()
+        h = heatmaps[2].numpy()[mask == label].max()
+
+        if w * h > surface_threshold:
+
+            from_y = int(round(max(0, c_y - h // 2)))
+            to_y = int(round(min(img_height, c_y + h // 2)))
+
+            from_x = int(round(max(0, c_x - w // 2)))
+            to_x = int(round(min(img_width, c_x + w // 2)))
+
+            label = 'window'
+            if logits is not None:
+                max_num_pixels = 0
+                for l in heatmap_labels:
+                    v = label_to_name_value[l]
+                    num_pixels = (logits[:, from_y:to_y, from_x:to_x].max(0)[1] == v).sum()
+                    if num_pixels > max_num_pixels:
+                        max_num_pixels = num_pixels
+                        label = l
+
+            cwh = {
+                'center': (c_x, c_y),
+                'width': w,
+                'height': h,
+                'label': label,  # default for now, but could also be door
+            }
+            cwh_list.append(cwh)
+    return {
+        'img_width': img_width,
+        'img_height': img_height,
+        'cwh_list': cwh_list,
+    }
+
+
+def info_to_mask(info, label_to_name_value=LABEL_NAME_TO_VALUE, heatmap_labels=HEATMAP_LABELS):
+    """
+    Creating a mask given heatmaps info
+
+    :param info: dict, heatmaps info
+    :param label_to_name_value: dict, label name mapped to its value
+    :param heatmap_labels: tuple, label to extract
+    :return: torch.Tensor
+    """
+    img_width = info['img_width']
+    img_height = info['img_height']
+    mask = torch.zeros((img_height, img_width), dtype=torch.int)
+    for cwh in info['cwh_list']:
+        if cwh['label'] in heatmap_labels:
+            c_x, c_y = cwh['center']
+            w, h = cwh['width'], cwh['height']
+
+            from_y = int(round(max(0, c_y - h // 2)))
+            to_y = int(round(min(img_height, c_y + h // 2)))
+
+            from_x = int(round(max(0, c_x - w // 2 + 1)))
+            to_x = int(round(min(img_width, c_x + w // 2)))
+
+            label = label_to_name_value[cwh['label']]
+            mask[from_y:to_y, from_x:to_x] = label
+    return mask.unsqueeze(0)
+
+
+def is_heatmaps_info(info):
+    return type(info) is dict and \
+           type(info.get('img_width')) is int and \
+           type(info.get('img_height')) is int and \
+           type(info.get('cwh_list')) is list
+
+
+class HeatmapsInfo:
+    def __init__(self, info):
+        assert is_heatmaps_info(info)
+        self.info = info

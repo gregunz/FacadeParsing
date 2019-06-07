@@ -6,6 +6,8 @@ from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 
 from facade_project import NUM_IMAGES, NUM_ROTATIONS, FACADE_ROT_IMAGES_TENSORS_DIR, FACADE_ROT_HEATMAPS_TENSORS_DIR
+from facade_project.data.facade_heatmap_dataset import HEATMAP_INFOS_PER_ROT
+from facade_project.geometry.heatmap import HeatmapsInfo
 
 
 def create_img_to_num_rot(num_img, num_rot_per_img):
@@ -92,6 +94,8 @@ def add_heatmaps_target(img_idx, rot_idx, device):
         return '{}/heatmaps_door-window_{:03d}_{:03d}.torch' \
             .format(FACADE_ROT_HEATMAPS_TENSORS_DIR, idx, jdx)
 
+    heatmaps_info = HEATMAP_INFOS_PER_ROT[img_idx][rot_idx]
     return {
-        'heatmaps': torch.load(get_filename(img_idx, rot_idx), map_location=device)
+        'heatmaps': torch.load(get_filename(img_idx, rot_idx), map_location=device),
+        'heatmaps_info': HeatmapsInfo(heatmaps_info),
     }

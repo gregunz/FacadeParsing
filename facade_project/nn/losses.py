@@ -42,7 +42,7 @@ def dice_loss(logits, true, eps=1e-7):
     return 1 - dice_loss
 
 
-def facade_criterion(predictions_list, predictions_weights, num_classes, use_dice=True, center_factor=100.):
+def facade_criterion(predictions_list, predictions_weights, device, num_classes, use_dice=True, center_factor=90.):
     """
     Criterion for facade parsing.
 
@@ -75,11 +75,11 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
                 if use_dice:
                     losses.append(dice_loss(output, target))
                 else:
-                    percentages = torch.tensor(FACADE_ROT_PROPORTIONS)
+                    percentages = torch.tensor(FACADE_ROT_PROPORTIONS, device=device)
                     assert num_classes == len(percentages)
                     inv_perc = 1 / percentages
                     weights = inv_perc / inv_perc.sum()
-                    losses.append(F.cross_entropy(output, target, weight=weights))
+                    losses.append(F.cross_entropy(output, target.squeeze(1), weight=weights))
 
             elif p == 'heatmaps':
                 target[:, 0] = target[:, 0] * center_factor
@@ -89,11 +89,9 @@ def facade_criterion(predictions_list, predictions_weights, num_classes, use_dic
 
         assert output_idx == outputs.size(1), 'we used all the channels available for the loss'
 
-        loss = losses[0] * predictions_weights[0]
-        if len(losses) > 1:
-            for l, w in zip(losses[1:], predictions_weights[1:]):
-                loss = loss + l * w
-
+        loss = torch.zeros(1, device=device)
+        for l, w in zip(losses, predictions_weights):
+            loss = loss + l * w
         return loss
 
     return facade_criterion_closure

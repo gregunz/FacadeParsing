@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 from torch.utils.data import Subset, DataLoader
+from torch.utils.data.dataloader import default_collate
 
 from facade_project import DEFAULT_SEED_SPLIT
 from facade_project.data.cached_dataset import CachedDataset
@@ -10,7 +11,7 @@ from facade_project.data.facade_labelme_dataset import FacadeLabelmeDataset
 from facade_project.data.facade_random_rot_dataset import FacadeRandomRotDataset
 from facade_project.data.transformed_dataset import TransformedDataset
 
-DEFAULT_VAL_IND = [6, 9, 14, 22, 24, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 45, 47, 51, 58, 60, 61, 64, 85, 86, 95,
+DEFAULT_VAL_IND = [6, 9, 22, 24, 30, 31, 32, 33, 34, 36, 37, 38, 39, 40, 45, 47, 51, 58, 60, 61, 64, 85, 86, 95,
                    104, 107, 112, 125, 127, 130, 131, 142, 145, 150, 162, 163, 165, 166, 167, 168, 183, 187, 188, 194,
                    201, 226, 228, 273, 274, 287, 288, 295, 318, 325, 328, 329, 347, 348, 372, 376, 386, 391, 408, 409,
                    411, 415, 416, 417]
@@ -62,4 +63,18 @@ def to_dataloader(dataset, batch_size):
     :param batch_size: size of a batch
     :return: a DataLoader
     """
-    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0)
+
+    def collate_fn(batch):
+        if type(batch[0][1]) is dict and 'heatmaps_info' in batch[0][1]:
+            heatmaps_infos = []
+            for inputs, targets in batch:
+                heatmaps_infos.append(targets['heatmaps_info'])
+                del targets['heatmaps_info']
+
+            batch_collated = default_collate(batch)
+            batch_collated[1]['heatmaps_info'] = heatmaps_infos
+            return batch_collated
+        else:
+            return default_collate(batch)
+
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=0, collate_fn=collate_fn)

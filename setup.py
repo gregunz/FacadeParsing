@@ -19,5 +19,5 @@ setup(name='Facade Project',
           'matplotlib',
           'torchvision',
           'imageio',
-          'shapely'
+          'shapely', 'scipy'
       ])

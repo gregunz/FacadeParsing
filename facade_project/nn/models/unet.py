@@ -39,6 +39,7 @@ class UNet(nn.Module):
                            'upsample' will use bilinear upsampling.
         """
         super(UNet, self).__init__()
+        self.epoch_trained = 0
         assert up_mode in ('upconv', 'upsample')
         self.padding = padding
         self.depth = depth
