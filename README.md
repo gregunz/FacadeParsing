@@ -13,8 +13,11 @@ docker pull gregunz/jupyterlab:facade_project
 ```
 It requires [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) and CUDA 10.0.
 
+Find in directory [docker](docker), scripts to start your docker environment.
+
 ## Install
-To use the library from anywhere in python:
+To install the `facade_project` library and use it within your python environment:
 ```
 pip install -e .
 ```
+where `.` is the root directory of this git repository, containing the installer (`setup.py` file).
