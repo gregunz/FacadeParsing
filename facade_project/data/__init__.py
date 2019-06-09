@@ -42,7 +42,8 @@ def split(dataset, seed=DEFAULT_SEED_SPLIT, percentage=0.9):
 
 def to_dataloader(dataset, batch_size):
     """
-    Turn a dataset into a shuffled DataLoader
+    Turn a dataset into a shuffled DataLoader. It handles dict and HeatmapsInfo type.
+
     :param dataset: the dataset
     :param batch_size: size of a batch
     :return: a DataLoader

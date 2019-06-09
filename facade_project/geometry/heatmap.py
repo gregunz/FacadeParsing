@@ -323,14 +323,17 @@ def info_to_mask(info, label_to_name_value=LABEL_NAME_TO_VALUE, heatmap_labels=H
     return mask.unsqueeze(0)
 
 
-def is_heatmaps_info(info):
-    return type(info) is dict and \
-           type(info.get('img_width')) is int and \
-           type(info.get('img_height')) is int and \
-           type(info.get('cwh_list')) is list
-
-
 class HeatmapsInfo:
+    """
+    A class to handle heatmaps info.
+
+    TODO:
+    Note that all functions defined above should be refactored to handle
+    HeatmapsInfo type instead of dict in order to be safer.
+    """
     def __init__(self, info):
-        assert is_heatmaps_info(info)
+        assert type(info) is dict and \
+               type(info.get('img_width')) is int and \
+               type(info.get('img_height')) is int and \
+               type(info.get('cwh_list')) is list
         self.info = info

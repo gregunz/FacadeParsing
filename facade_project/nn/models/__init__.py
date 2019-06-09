@@ -8,6 +8,14 @@ from facade_project.nn.models.unet import UNet
 
 
 def load_trained_model(name, epoch, device):
+    """
+    Load a trained model given its same and number of trained epoch.
+
+    :param name: str, name of the model
+    :param epoch: int, index referring to the number of epoch trained
+    :param device: torch.device, on which device to load the model and its weights ('cpu' or 'cuda:x')
+    :return: Albunet or UNet, trained model
+    """
     dir_path = '{}/models/{}'.format(PATH_TO_DATA, name)
     weights_path = '{}/weights_{:03d}.torch'.format(dir_path, epoch)
     summary = json.load(open('{}/summary.json'.format(dir_path), mode='r'))

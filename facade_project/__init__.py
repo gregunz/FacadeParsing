@@ -15,7 +15,9 @@ NUM_IMAGES = 418
 NUM_ROTATIONS = 5
 # Max size (either height or width) allowed after resizing the images in order to less computationally expensive
 IMG_MAX_SIZE = 1024
+# Default crop size
 CROP_SIZE = 768
+# Margin to keep when cutting background border of an image
 CUT_MARGIN = 50
 
 
