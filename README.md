@@ -13,4 +13,5 @@ To use the library from anywhere in python:
 pip install -e .
 ```
 
+## Details
 Find more details about the project in the `report.pdf`.
