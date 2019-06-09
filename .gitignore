@@ -1,8 +1,9 @@
-__data__
+data
 runs
 tmp*
 .DS_STORE
 .vscode
+.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
