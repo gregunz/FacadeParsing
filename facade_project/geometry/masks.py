@@ -1,6 +1,6 @@
 from torch import Tensor
 
-from facade_project import CUT_STEP, CUT_MARGIN
+from facade_project import CUT_MARGIN
 
 
 def find_limits(mask, step, margin):
@@ -75,8 +75,8 @@ def cut_borders(img, lbl):
     :return: tuple(torch.Tensor or PIL.Image, torch.Tensor or PIL.Image)
     """
     if type(img) is Tensor:
-        up, down, left, right = find_limits(lbl, CUT_STEP, CUT_MARGIN)
+        up, down, left, right = find_limits(lbl, step=10, margin=CUT_MARGIN)
         return img[:, up:down, left:right], lbl[:, up:down, left:right]
     else:
-        bbox = get_bbox(lbl)
+        bbox = get_bbox(lbl, cut_margin=CUT_MARGIN)
         return crop_pil(img, bbox), crop_pil(lbl, bbox)

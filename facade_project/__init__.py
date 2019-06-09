@@ -16,8 +16,7 @@ NUM_ROTATIONS = 5
 # Max size (either height or width) allowed after resizing the images in order to less computationally expensive
 IMG_MAX_SIZE = 1024
 CROP_SIZE = 768
-CUT_STEP = 10
-CUT_MARGIN = 100
+CUT_MARGIN = 50
 
 
 # For the construction of the heatmaps
@@ -33,7 +32,7 @@ HEATMAP_TYPES_HANDLED = ('center', 'width', 'height')
 
 # Datasets
 # default seed for splitting
-DEFAULT_SEED_SPLIT = 238122
+DEFAULT_SEED_SPLIT = 42
 
 # directories
 FACADE_IMAGES_DIR = '{}/images'.format(PATH_TO_DATA)
@@ -49,6 +48,6 @@ FACADE_ROT_HEATMAPS_TENSORS_DIR = '{}/tensor/rotated_rescaled'.format(FACADE_HEA
 FACADE_ROT_HEATMAPS_INFOS_PATH = '{}/json/heatmaps_infos_rotated_rescaled.json'.format(FACADE_HEATMAPS_DIR)
 
 # Facade Random Rotations Dataset statistics
-FACADE_ROT_PROPORTIONS = (0.3252, 0.5821, 0.0663, 0.0264)
-FACADE_ROT_MEAN = (0.4939, 0.4681, 0.4360)
-FACADE_ROT_STD = (0.2271, 0.2261, 0.2410)
+FACADE_ROT_PROPORTIONS = (0.3078, 0.5960, 0.0688, 0.0274)
+FACADE_ROT_MEAN = (0.4955, 0.4687, 0.4356)
+FACADE_ROT_STD = (0.2254, 0.2239, 0.2373)

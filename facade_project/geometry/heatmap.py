@@ -155,8 +155,8 @@ def rotate(info, angle):
 
 def build_heatmaps(
         heatmap_info,
-        labels,
-        heatmap_types,
+        labels=HEATMAP_LABELS,
+        heatmap_types=HEATMAP_TYPES_HANDLED,
         is_sigma_fixed=IS_SIGMA_FIXED,
         sigma_fixed=SIGMA_FIXED,
         sigma_scale=SIGMA_SCALE,
