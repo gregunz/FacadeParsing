@@ -11,6 +11,7 @@ Please use this docker image which contains every single dependency in order to 
 ```
 docker pull gregunz/jupyterlab:facade_project
 ```
+It requires [nvidia-docker](https://github.com/NVIDIA/nvidia-docker) and CUDA 10.0.
 
 ## Install
 To use the library from anywhere in python:
