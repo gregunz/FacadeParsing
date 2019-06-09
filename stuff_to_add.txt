@@ -1,6 +1,0 @@
-torchviz #done
-line_profiler #done
-jupyter labextension install jupyterlab_tensorboard #done
-shapely #done
-
-ssh service (and password)
