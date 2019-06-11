@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 docker run -d \
   --runtime=nvidia \
   --name ai \
