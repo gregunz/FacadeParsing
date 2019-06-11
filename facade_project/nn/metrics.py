@@ -143,7 +143,7 @@ class FacadeMetric(MetricHandler):
             logits = outputs[:, :4]
             for idx, heatmaps_info in enumerate(targets['heatmaps_info']):
                 heatmaps = outputs[idx, 4:]
-                pred_info = heatmaps_to_info(heatmaps.detach().cpu(), logits[idx], 20, 1000,
+                pred_info = heatmaps_to_info(heatmaps.detach().cpu(), logits[idx], 10, 1000,
                                              heatmap_labels=self.heatmap_labels)
                 acc = accuracy_from_infos(pred_info, heatmaps_info.info)
                 self.heatmaps_acc_run.append(acc)

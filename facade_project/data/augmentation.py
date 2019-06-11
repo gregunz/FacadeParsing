@@ -68,14 +68,13 @@ def random_flip(p=0.5):
     """
 
     def random_flip_closure(img, lbl):
-        is_tensor = type(img) is Tensor
         rand = random.random()
 
         def tf(inputs):
             if rand < p:
                 if type(inputs) is HeatmapsInfo:
                     return HeatmapsInfo(flip_info(inputs.info))
-                elif is_tensor:
+                elif type(inputs) is Tensor:
                     return inputs.flip(2)
                 else:
                     return TF.hflip(inputs)

@@ -63,7 +63,7 @@ optional arguments:
 ```
 For example:
 ```
-python3 run.py --batch-train=4 --epochs=25 --use-dice=true --device=cuda:0 --model=albunet --pretrained=true --pred-weights 1 0.002
+python3 run.py --batch-train=4 --epochs=25 --use-dice=true --device=cuda:0 --model=albunet --pretrained=true --pred-weights 1 0.005
 ```
 
 For predictions, one should look into `notebooks/nb_predictions.ipynb`

@@ -3,7 +3,7 @@ import torch
 from facade_project.geometry.heatmap import heatmaps_to_info, info_to_mask
 
 
-def outputs_to_predictions(outputs, center_threshold=20, surface_threshold=1000):
+def outputs_to_predictions(outputs, center_threshold=10, surface_threshold=1000):
     """
     Going from the outputs of the model (predicting heatmaps) to the final predictions
 
