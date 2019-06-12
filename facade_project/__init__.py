@@ -22,13 +22,15 @@ CUT_MARGIN = 50
 
 
 # For the construction of the heatmaps
-IS_SIGMA_FIXED = True
+IS_SIGMA_FIXED = False
 SIGMA_FIXED = 10
 # When not fixed, widths and heights are used as sigmas but they require scaling
 SIGMA_SCALE = 0.1
 # which label to transform into heatmaps
 HEATMAP_LABELS = ('window', 'door')
-# which types of heatmaps are handled (can be created)
+# which types of heatmaps are handled (can be created).
+# one should not/does not need to modify this to generate different heatmaps,
+# but the argument of build_heatmaps directly instead (which by default is this)
 HEATMAP_TYPES_HANDLED = ('center', 'width', 'height')
 
 

@@ -82,7 +82,12 @@ def facade_criterion(predictions_list, predictions_weights, device, num_classes,
                     losses.append(F.cross_entropy(output, target.squeeze(1), weight=weights))
 
             elif p == 'heatmaps':
-                target[:, 0] = target[:, 0] * center_factor
+                if n_channels == 3:
+                    # this means, there is the center which needs to be scaled
+                    target[:, 0] = target[:, 0] * center_factor
+                else:
+                    assert 1 <= n_channels <= 2, 'only handling center, width and height maps'
+
                 output = F.relu(outputs[:, output_idx:output_idx + n_channels])
                 output_idx += n_channels
                 losses.append(F.mse_loss(output, target))

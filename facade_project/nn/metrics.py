@@ -129,6 +129,8 @@ class FacadeMetric(MetricHandler):
         return False
 
     def add(self, outputs, targets):
+        # Note here that channels ordering of outputs is fixed (e.g outputs[:, :4]),
+        # this could be done in more dynamic way
         assert type(targets) is dict
 
         for p in self.predictions_list:
