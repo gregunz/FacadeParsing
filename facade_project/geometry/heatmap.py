@@ -173,11 +173,11 @@ def build_heatmaps(
      be used and rescaled by this value
     :return: torch.Tensor
     """
-    heatmap_types_to_idx = {htype: idx for idx, htype in enumerate(HEATMAP_TYPES_HANDLED) if htype in heatmap_types}
-    assert len(heatmap_types_to_idx) > 0, 'one must build at least one heatmap'
+    heatmap_types = [htype for htype in HEATMAP_TYPES_HANDLED if htype in heatmap_types]
+    assert len(heatmap_types) > 0, 'one must build at least one heatmap'
 
     img_height, img_width = heatmap_info['img_height'], heatmap_info['img_width']
-    heatmaps = torch.zeros(len(heatmap_types_to_idx), img_height, img_width)
+    heatmaps = torch.zeros(len(heatmap_types), img_height, img_width)
 
     meshgrids = torch.meshgrid(
         [torch.arange(size, dtype=torch.float32) for size in [img_height, img_width]]
@@ -196,7 +196,7 @@ def build_heatmaps(
                 img_layer *= torch.exp(-((mgrid - mean) / (2 * std)) ** 2) / (std * math.sqrt(2 * math.pi))
             img_layer = img_layer / torch.max(img_layer)
 
-            for name, heatmap_idx in heatmap_types_to_idx.items():
+            for heatmap_idx, name in enumerate(heatmap_types):
                 if name == 'center':
                     heatmaps[heatmap_idx] += img_layer
                 elif name == 'width':
