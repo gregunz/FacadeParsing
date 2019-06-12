@@ -9,7 +9,7 @@ from facade_project.utils.ml_utils import Epocher
 
 
 def train_model(dataloaders, path_weights, model_name, model, device, criterion, optimizer, scheduler=None,
-                metric_handler=None, writer=None, num_epoch=25, keep_n_best=5, verbose=True):
+                metric_handler=None, writer=None, num_epoch=25, keep_n_best=None, verbose=True):
     """
     A fully customizable training loop
 
@@ -24,7 +24,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
     :param metric_handler: optional, a metric handler
     :param writer: optional, a tensorboard summary writer
     :param num_epoch: int, number of epochs to train
-    :param keep_n_best: int, number of the past best weights to store
+    :param keep_n_best: int, optional number of the past best weights to store, if none, we save for each epoch
     :param verbose: bool, whether it prints information during training
     :return: torch.nn.Module, model trained with best validation loss or highest validation metric
     """
@@ -103,10 +103,10 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
 
                 # deep copy the model
                 metric_improved = metric_handler is not None and metric_handler.last_is_best(phase)
-                if phase == 'val' and (epoch_loss < best_loss or metric_improved):
+                if keep_n_best is None or (phase == 'val' and (epoch_loss < best_loss or metric_improved)):
                     best_loss = min(epoch_loss, best_loss)
                     model_path = '{}/{}/weights_{:03d}.torch'.format(path_weights, model_name, epoch)
-                    if len(best_model_paths) >= keep_n_best:
+                    if keep_n_best is not None and len(best_model_paths) >= keep_n_best:
                         os.remove(best_model_paths.pop(0))
                     best_model_paths.append(model_path)
 
