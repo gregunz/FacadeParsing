@@ -97,7 +97,7 @@ def main(args):
         if p == 'mask':
             num_target_channels += len(label_name_to_value)
         elif p == 'heatmaps':
-            num_target_channels += 3  # heatmaps for center, width and height
+            num_target_channels += 2  # heatmaps for width and height
     assert num_target_channels > 0, 'model should predict at least one thing'
 
     if args.load_trained_name is not None and args.load_trained_epoch is not None:
@@ -126,7 +126,7 @@ def main(args):
     else:
         raise Exception('model undefined')
 
-    optimizer = optim.Adam(model.parameters())
+    optimizer = optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999))
     criterion = facade_criterion(
         predictions_list=args.predictions,
         predictions_weights=args.pred_weights,
@@ -159,7 +159,7 @@ def main(args):
             metric_handler=FacadeMetric(args.predictions, label_name_to_value, HEATMAP_LABELS),
             writer=SummaryWriter('runs/{}'.format(run_name_str)),
             num_epoch=args.epochs,
-            keep_n_best=10,
+            # keep_n_best=10,
             verbose=True,
         )
 
