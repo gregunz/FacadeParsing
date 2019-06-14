@@ -109,3 +109,7 @@ TODO¨
 
 ### Else
 `notebooks/labelme_to_heatmaps_info.ipynb` shows how heatmaps info are extracted from a labelme file.
+
+## Slides
+Also available here: [slides.pdf](slides.pdf)
+<img src='slides.gif'/>
