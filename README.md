@@ -102,14 +102,29 @@ For predictions, one should look into `notebooks/nb_predictions.ipynb`
 `notebooks/nb_demo_datasets.ipynb` showcase how to use the datasets implemented in this project.
 
 ### Generating
-`notebooks/`
-TODO¨
+`notebooks/nb01_generate_image_rotated_rescaled_tensors.ipynb` shows the current way to generate the dataset (tensors).
+
+`notebooks/nb02_generate_image_rotated_rescaled_tensors.ipynb` shows another way to generate the dataset.
+
+`notebooks/nb_generate_heatmaps_tensors.ipynb` shows how the current heatmaps tensors are generated.
 
 `notebooks/labelme_to_coco.ipynb` shows how to from labelme files to a COCO style dataset.
 
 ### Else
 `notebooks/labelme_to_heatmaps_info.ipynb` shows how heatmaps info are extracted from a labelme file.
 
+`notebooks/nb_tensorboard_to_csv.ipynb` show how to export into csv the tensorboard logs generated
+ by the `scripts/run.py` script.
+ 
+## Plots
+Plots showing performance, statistics and script to generate them can be found in the [plots](plots) directory.
+ 
+## Outputs
+Outputs of the latest model are available in the [outputs](outputs) directory.
+
 ## Slides
 Also available here: [slides.pdf](slides.pdf)
 <img src='slides.gif'/>
+
+## Todo
+- Fix title of one slide in slides.pdf
