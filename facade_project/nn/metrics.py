@@ -71,7 +71,7 @@ def accuracy_from_infos(pred_info, target_info, heatmap_labels=HEATMAP_LABELS, r
         return False
 
     if ret_details:
-        details = torch.zeros(3, len(heatmap_labels))
+        details = torch.zeros(len(heatmap_labels) + 1, 2)
 
     for idx, label in enumerate(heatmap_labels):
         target_ranges = to_ranges(target_info, label)
