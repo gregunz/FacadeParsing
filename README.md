@@ -54,12 +54,11 @@ To train, the `scripts/run.py` script is ready to use:
 ```
 usage: run.py [-h] [--model MODEL] [--epochs EPOCHS] [--split-seed SPLIT_SEED]
               [--batch-train BATCH_TRAIN] [--batch-val BATCH_VAL] [--wf WF]
-              [--pretrained PRETRAINED]
+              [--lr LR] [--not-pretrained]
               [--predictions PREDICTIONS [PREDICTIONS ...]]
               [--pred-weights PRED_WEIGHTS [PRED_WEIGHTS ...]]
               [--path-for-weights PATH_FOR_WEIGHTS] [--device DEVICE]
-              [--use-dice USE_DICE] [--crop-size CROP_SIZE]
-              [--center-factor CENTER_FACTOR]
+              [--use-ce] [--use-scheduler] [--crop-size CROP_SIZE]
               [--load-trained-name LOAD_TRAINED_NAME]
               [--load-trained-epoch LOAD_TRAINED_EPOCH]
 
@@ -73,14 +72,15 @@ optional arguments:
   --batch-train BATCH_TRAIN
   --batch-val BATCH_VAL
   --wf WF
-  --pretrained PRETRAINED
+  --lr LR
+  --not-pretrained
   --predictions PREDICTIONS [PREDICTIONS ...]
   --pred-weights PRED_WEIGHTS [PRED_WEIGHTS ...]
   --path-for-weights PATH_FOR_WEIGHTS
   --device DEVICE
-  --use-dice USE_DICE
+  --use-ce
+  --use-scheduler
   --crop-size CROP_SIZE
-  --center-factor CENTER_FACTOR
   --load-trained-name LOAD_TRAINED_NAME
   --load-trained-epoch LOAD_TRAINED_EPOCH
 ```
