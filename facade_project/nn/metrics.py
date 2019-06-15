@@ -150,7 +150,7 @@ class FacadeMetric(MetricHandler):
                 acc = accuracy_from_infos(pred_info, heatmaps_info.info)
                 self.heatmaps_acc_run.append(acc)
 
-    def compute(self, phase, dataset_size):
+    def compute(self, phase):
         assert phase in ['train', 'val']
 
         if self.do_mask():

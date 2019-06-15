@@ -20,7 +20,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
     :param device: torch.device, the device on which to train the model
     :param criterion: function, the criterion to minimize
     :param optimizer: torch.optim, the optimizer used
-    :param scheduler: optional, a scheduler
+    :param scheduler: optional, a scheduler for the learning rate
     :param metric_handler: optional, a metric handler
     :param writer: optional, a tensorboard summary writer
     :param num_epoch: int, number of epochs to train
@@ -84,7 +84,7 @@ def train_model(dataloaders, path_weights, model_name, model, device, criterion,
 
                 # metric handler per epoch
                 if metric_handler:
-                    metric_handler.compute(phase=phase, dataset_size=len(dataloaders[phase]))
+                    metric_handler.compute(phase=phase)
 
                 if verbose:
                     metric_desc = ''

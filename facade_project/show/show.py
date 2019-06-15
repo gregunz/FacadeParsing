@@ -14,12 +14,13 @@ def __convert_to_numpy__(tensor):
     return tensor
 
 
-def show_img(image, fig_size=DEFAULT_FIG_SIZE):
+def show_img(image, fig_size=DEFAULT_FIG_SIZE, filename=None):
     """
-    Plot an image
+    Plot an image.
 
     :param image: torch.Tensor or numpy.ndarray
     :param fig_size: tuple(int, int), size of the plot
+    :param filename: str, optional filename to save plot
     :return: None
     """
     if isinstance(image, torch.Tensor):
@@ -27,17 +28,21 @@ def show_img(image, fig_size=DEFAULT_FIG_SIZE):
     print(image.shape)
     plt.figure(figsize=fig_size)
     plt.imshow(image.squeeze())
-    plt.show()
+    if filename is not None:
+        plt.savefig(filename)
+    else:
+        plt.show()
 
 
-def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEFAULT_FIG_SIZE):
+def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEFAULT_FIG_SIZE, filename=None):
     """
-    Plot an image with superposed label
+    Plot an image with superposed label (mask).
 
     :param image: torch.Tensor or numpy.ndarray or numpy.ndarray
     :param label: torch.Tensor or numpy.ndarray
     :param label_names: list or dict, name of the labels
     :param fig_size: tuple(int, int), size of the plot
+    :param filename: str, optional filename to save plot
     :return: None
     """
     if isinstance(label_names, dict):
@@ -51,18 +56,19 @@ def show_labeled_img(image, label, label_names=LABEL_NAME_TO_VALUE, fig_size=DEF
     if len(lbl.shape) == 3:
         lbl = lbl[:, :, 0]
     lbl_viz = labelme.utils.draw_label(lbl, img, label_names)
-    show_img(lbl_viz, fig_size)
+    show_img(lbl_viz, fig_size, filename)
 
 
-def show_channels(img, nrow=3, fig_size=DEFAULT_FIG_SIZE):
+def show_channels(img, nrow=3, fig_size=DEFAULT_FIG_SIZE, filename=None):
     """
-    Plot the channel of an image next to each others.
+    Plot the channel of an image next to each others. Mostly used to display heatmaps.
 
     :param img: torch.Tensor
     :param nrow: number of image per row
     :param fig_size: tuple(int, int), size of the plot
+    :param filename: str, optional filename to save plot
     :return: None
     """
     channels = [img[i].unsqueeze(0) / img[i].max() for i in range(img.size(0))]
     img_grid = utils.make_grid(channels, nrow=nrow)
-    show_img(img_grid, fig_size)
+    show_img(img_grid, fig_size, filename)

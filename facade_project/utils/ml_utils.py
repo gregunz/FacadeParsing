@@ -15,12 +15,11 @@ class MetricHandler:
         """
         raise NotImplementedError()
 
-    def compute(self, phase, dataset_size):
+    def compute(self, phase):
         """
         Aggregate accumulated metrics over batches at the end of the epoch
 
         :param phase: either 'train' or 'val'
-        :param dataset_size: size of the dataset
         """
         raise NotImplementedError()
 

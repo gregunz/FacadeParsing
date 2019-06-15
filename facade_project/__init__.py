@@ -22,7 +22,7 @@ CUT_MARGIN = 50
 
 
 # For the construction of the heatmaps
-IS_SIGMA_FIXED = False
+IS_SIGMA_FIXED = True
 SIGMA_FIXED = 10
 # When not fixed, widths and heights are used as sigmas but they require scaling
 SIGMA_SCALE = 0.1
